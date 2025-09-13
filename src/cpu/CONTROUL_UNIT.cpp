@@ -1,4 +1,63 @@
-// Provisório (JP)
+/*
+  CONTROL_UNIT.cpp (Provisório - JP)
+
+  O que este arquivo "faz":
+  - Lê instruções da memória, decodifica quais registradores e imediatos usar,
+    manda as operações para a ULA (ALU), faz acesso à memória (load/store)
+    e gera pedidos de I/O (print). Tudo isso dividido em 5 etapas
+    (pipeline): IF, ID, EX, MEM, WB.
+  Estrutura geral (visão rápida):
+  - Helpers:
+      * binaryStringToUint(...)  -> transforma uma string de '0'/'1' em número.
+      * signExtend16(...)        -> transforma um imediato de 16 bits em 32 bits
+                                   preservando o sinal (two's complement).
+  - Utilitários para extrair campos da instrução de 32 bits:
+      * Get_immediate(...)            -> pega os 16 bits de imediato.
+      * Pick_Code_Register_Load(...)  -> pega o campo rt (bits 11..15).
+      * Get_destination_Register(...) -> pega rd (bits 16..20).
+      * Get_target_Register(...)      -> pega rt (bits 11..15).
+      * Get_source_Register(...)      -> pega rs (bits 6..10).
+  - Identificação de instrução:
+      * Identificacao_instrucao(...)  -> lê os 6 bits do opcode e tenta
+        retornar uma string com o nome da instrução (\"ADD\", \"LW\", \"J\", ...).
+        Observação: o mapeamento está simplificado; R-type com opcode 000000
+        tenta usar o campo 'funct' para inferir ADD/SUB/MULT/DIV.
+  - Estágios do pipeline (implementados como métodos):
+      * Fetch(context)   -> busca a instrução na memória usando o PC e escreve em IR.
+                           Também detecta um sentinel de fim de programa.
+      * Decode(regs, d)  -> lê a IR, identifica o mnemonic e preenche os campos
+                           em Instruction_Data (registradores, imediato, etc).
+                           Faz sign-extend dos imediatos quando necessário.
+      * Execute(...)     -> dispatcher que decide qual execução fazer:
+                           - Execute_Aritmetic_Operation(...) para ADD/SUB/...
+                           - Execute_Loop_Operation(...) para BEQ/J/BLT/...
+                           - Execute_Operation(...) para PRINT / I/O
+      * Memory_Acess(...)-> realiza LW, SW, LA, LI e leitura para PRINT de
+                           endereços de memória.
+      * Write_Back(...)  -> grava na memória em caso de SW (ou outros writes se adicionados).
+
+  O que o código espera encontrar (dependências que eu fiz):
+  - Tipos/objetos já definidos em outros arquivos: MainMemory, PCB, ioRequest,
+    REGISTER_BANK, ALU/ULA, Map (mapa de código->nome do registrador), State.
+  - Instruções na memória são palavras de 32 bits; algumas funções tratam
+    campos como strings de '0'/'1' (por simplicidade do protótipo).
+  - O fim do programa é detectado por uma palavra sentinel (valor binário
+    começando com 111111... conforme usado no projeto).
+  Como usar (rápido):
+  - Este arquivo implementa os métodos declarados em CONTROL_UNIT.hpp.
+  - Ele é chamado pelo Core(...) (no loop de pipeline) que coordena os cinco
+    estágios e controla quando o processo deve parar ou ser bloqueado.
+  Próximos passos sugeridos :
+  - Tornar o mapeamento opcode/funct completo para suportar todos os R-types.
+  - Substituir manipulação por strings binárias por operações bitwise diretas.
+  - Implementar simples forwarding / detecção de hazards (se quiser modelar
+    dependências entre instruções).
+  - Adicionar logs ou modos de debug para visualizar cada estágio.
+
+  Observação final: pode estar confuso, mas me responsabilizo, então qualquer coisa só me perguntar.
+*/
+
+
 #include "CONTROL_UNIT.hpp"
 #include "MainMemory.hpp"   // Incluir a definição concreta quando estiver pronto (ou seja, provisório)
 #include "PCB.hpp" // PCB = Process Control Block (ou bloco de controle de processo).
@@ -304,5 +363,90 @@ void Control_Unit::Write_Back(Instruction_Data &data, ControlContext &context) {
         int value = context.registers.acessoLeituraRegistradores[name_rt]();
         context.ram.WriteMem(addr, value);
     }
+}
+
+// ==============================
+// Loop principal do pipeline
+// ==============================
+// Esta função é a mesma assinatura declarada no header CONTROL_UNIT.hpp.
+// Ela cria a unidade de controle, monta o contexto e executa o loop
+// que simula o pipeline de 5 estágios usando os contadores.
+//
+// A ideia do loop:
+//  - "counter" é um ponteiro lógico que sobe a cada ciclo e determina quais
+//    estágios serão chamados (IF, ID, EX, MEM, WB) sobre instruções
+//    que já entraram no pipeline.
+//  - "counterForEnd" controla quantos ciclos ainda faltam para esvaziar
+//    o pipeline quando decidimos parar (drain).
+//  - "clock" conta quantos ciclos o processo já rodou (usado com quantum).
+//  - "endExecution" é setado quando o quantum acaba ou quando achamos
+//    a instrução 'sentinela' para o fim de programa; então, começamos a decrementar
+//    'counterForEnd' até 0 para garantir que todas instruções em execução terminem.
+//  - "UC.data" é um buffer simples (FIFO implícito) onde empilhamos
+//    "Instruction_Data" para acompanhar qual informação cada estágio deve usar.
+
+void* Core(MainMemory &ram, PCB &process, vector<unique_ptr<ioRequest>>* ioRequests, bool &printLock) {
+    auto &registers = process.regBank; // pega referência direta ao banco de registradores do processo
+    // cria unidade de controle e um template de Instruction_Data
+    Control_Unit UC;
+    Instruction_Data data; // entrada vazia que será empurrada no pipeline
+    // contadores e flags (iniciais)
+    int clock = 0;             // ciclos já executados pelo processo (para quantum)
+    int counterForEnd = 5;     // quantos ciclos faltam para esvaziar o pipeline
+    int counter = 0;           // avança a cada ciclo; usado para indexar estágios
+    bool endProgram = false;   // sinaliza que encontramos a instrução de fim
+    bool endExecution = false; // sinaliza para iniciar o esvaziamento do pipeline
+    // monta o contexto que será passado a todos os métodos
+    ControlContext context{ registers, ram, *ioRequests, printLock, process, counter, counterForEnd, endProgram, endExecution };
+    // Enquanto houver instruções em execução no pipeline (counterForEnd > 0)
+    while (context.counterForEnd > 0) {
+        // WRITE BACK (estágio 5)
+        // Só chamamos se já houver instrução suficiente no buffer
+        // atenção ao índice: context.counter - 4
+        if (context.counter >= 4 && context.counterForEnd >= 1) {
+            UC.Write_Back(UC.data[context.counter - 4], context);
+        }
+        // MEMORY ACCESS (estágio 4)
+        if (context.counter >= 3 && context.counterForEnd >= 2) {
+            UC.Memory_Acess(UC.data[context.counter - 3], context);
+        }
+        // EXECUTE (estágio 3)
+        if (context.counter >= 2 && context.counterForEnd >= 3) {
+            UC.Execute(UC.data[context.counter - 2], context);
+        }
+        // DECODE (estágio 2)
+        if (context.counter >= 1 && context.counterForEnd >= 4) {
+            // Decode lê o IR (Instruction Register) atual do registro e preenche o Instruction_Data
+            UC.Decode(context.registers, UC.data[context.counter - 1]);
+        }
+        // FETCH (estágio 1)
+        // Só fazemos fetch de uma nova instrução enquanto estivermos aceitando
+        // novas instruções (counterForEnd == 5 significa que pipeline está aberto)
+        if (context.counter >= 0 && context.counterForEnd == 5) {
+            // empurra um slot vazio no buffer e faz o fetch que grava IR (Instruction Register) no registrador
+            UC.data.push_back(data);
+            UC.Fetch(context);
+            // Observe: Fetch escreve a IR; o Decode do próximo ciclo irá ler a IR
+        }
+        // avança o tempo do pipeline
+        context.counter += 1;
+        clock += 1;
+        // se atingimos o quantum do processo, ou achamos END, sinalizar para terminar
+        if (clock >= process.quantum || context.endProgram == true) {
+            context.endExecution = true;
+        }
+        // quando endExecution estiver true começamos a decrementar counterForEnd
+        // (Para terminar o pipeline). Isso garante que instruções já fetchadas terminem.
+        if (context.endExecution == true) {
+            context.counterForEnd -= 1;
+        }
+    }
+    // se o fim do programa foi detectado, marcamos o processo como finalizado
+    if (context.endProgram) {
+        context.process.state = State::Finished;
+    }
+
+    // retorno nulo se quiser, pode retornar um status ou ponteiro mais informativo (não pensei nisso ainda).
+    return nullptr;
 }
 
