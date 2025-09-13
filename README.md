@@ -66,6 +66,7 @@ Antes de começar, verifique se seu sistema atende a estes dois requisitos essen
   
 
 1.  **Habilitar a funcionalidade "Subsistema do Windows para Linux":**
+
 ```powershell
 dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart     
 ```
@@ -85,23 +86,27 @@ dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /nores
 
 
 5.  **Definir o WSL 2 como padrão:**
+
 ```powershell
 wsl --set-default-version 2
 ```
 
 6.  **Instale o Ubuntu:**
+
 ```powershell
 wsl --install -d Ubuntu
 ```
   
 4.  **Configure o Ubuntu:**
+
     Após a instalação procure por Ubuntu no menu iniciar e clique. Você precisará  configurar rapidamente, será pedido para você criar um **nome de usuário** e uma **senha** para o seu ambiente Linux.
     
 ---
 
 ### Passo 2: Instalar o Docker Desktop
   1.  **Baixe o Instalador:**
-    - Vá para o site oficial: [**docker.com/products/docker-desktop/**](https://www.docker.com/products/docker-desktop/)
+
+  - Vá para o site oficial: [**docker.com/products/docker-desktop/**](https://www.docker.com/products/docker-desktop/)
 
 2.  **Execute o Instalador:**
 
@@ -110,7 +115,7 @@ wsl --install -d Ubuntu
 3.  **Inicie e Configure o Docker Desktop:**
 
     - Após a instalação, inicie o Docker Desktop.
-    
+
     - Faça um registro rápido na plataforma docker hub
 
     - Vá em **Settings > Resources > WSL Integration**.
@@ -138,10 +143,7 @@ wsl --install -d Ubuntu
 
 2.  Clique em **"Reopen in Container"** quando o aviso aparecer, aguarde pois estárá sendo feito o download de todas as dependenciais necessárias do container. 
 
-3. Digite os seguintes comandos para testar o funcionamento, abra o terminal do vscode e digite os seguintes comandos:
-- `make clean` 
-- `make` or `make hello`
-- `make run`
-
+3. Abra o terminal do vscode e digite os seguintes comandos:
+- `make teste`
  
 
