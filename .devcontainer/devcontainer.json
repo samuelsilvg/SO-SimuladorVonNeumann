@@ -1,0 +1,39 @@
+{
+  "name": "C++ Von Neumann Simulator",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+
+  // Argumentos para o Docker. As flags abaixo são essenciais para permitir
+  // que o depurador GDB funcione corretamente dentro do container.
+  "runArgs":[],
+
+  // Monta a pasta do projeto dentro do container
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=cached",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
+  // Personalizações para o VS Code dentro do container
+  "customizations": {
+    "vscode": {
+      // Configurações padrão do editor para garantir consistência
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "C_Cpp.default.compilerPath": "/usr/bin/g++",
+        "cmake.configureOnOpen": true
+      },
+      // Extensões que serão instaladas automaticamente no container
+      "extensions": [
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.cmake-tools",
+        "eamodio.gitlens"
+      ]
+    }
+  },
+
+  // Comando executado após a criação do container para resolver um problema comum de permissão do Git
+  "postCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
+
+  // *** ESTA É A LINHA QUE RESOLVE O PROBLEMA DE PERMISSÃO ***
+  // Diz ao VS Code para usar o usuário 'vscode' e sincronizar seu ID com o seu usuário do Fedora.
+  "remoteUser": "vscode"
+}
