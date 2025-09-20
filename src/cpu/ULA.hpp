@@ -8,6 +8,7 @@ enum operation
     SUB,
     MUL,
     DIV,
+    AND_OP,
     BEQ,
     BNE,
     BLT,

@@ -98,6 +98,13 @@ void ALU::calculate(){
         break;
     }
 
+    case AND_OP:
+    {
+        // Operação bit a bit AND (interpretamos A e B como unsigned aqui)
+        result = static_cast<int32_t>(A & B);
+        break;
+    }
+
     case BEQ:
     {
         // Branch if equal: result = 1 se A == B, senão 0
