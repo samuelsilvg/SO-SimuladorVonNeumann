@@ -1,29 +1,26 @@
-# Nome do compilador e flags
-CC = gcc
-CFLAGS = -Wall -Wextra -g
+# Compilador e flags
+CXX := g++
+CXXFLAGS := -Wall -Wextra -g -std=c++17 -Isrc
 
-# Nome do arquivo de saída (executável)
-TARGET = teste
+TARGET := teste
+SRC := src/teste.cpp src/cpu/ULA.cpp
+OBJ := $(SRC:.cpp=.o)
 
-# Nome do arquivo fonte principal
-SRC = src/teste.cpp
+# Make clean -> make -> make run
+all: clean $(TARGET) run
 
-# Alvo padrão: compila o programa
-all: $(SRC)
-	$(CC) $(CFLAGS) -o $(TARGET) $(SRC)
+$(TARGET): $(OBJ)
+	$(CXX) $(CXXFLAGS) -o $@ $(OBJ)
 
-# Alvo para limpar os arquivos gerados
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
 clean:
 	@echo "🧹 Limpando arquivos antigos..."
-	@rm -f $(TARGET)
+	@rm -f $(OBJ) $(TARGET)
 
-# Alvo para executar o programa
 run:
 	@echo "🚀 Executando o programa..."
 	@./$(TARGET)
 
-# O alvo que você pediu: limpa, compila e executa
-teste: clean all run
-
-# Declara alvos que não são nomes de arquivos
-.PHONY: all clean run teste
+.PHONY: all clean run
