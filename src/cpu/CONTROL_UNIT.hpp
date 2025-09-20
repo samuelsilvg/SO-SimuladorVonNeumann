@@ -57,7 +57,6 @@ struct ControlContext {
 
 /* Unidade de Controle */
 struct Control_Unit {
-    operation op;                    // operação atual (do enum em ULA.hpp)
     vector<Instruction_Data> data;   // buffer simples de insstruções
     Map<string, string> map;          // mapa de códigos -> nomes de registradores
 
@@ -72,14 +71,13 @@ struct Control_Unit {
 
     // --- utilitários de extração (apenas assinaturas; implementar no .cpp) ---
     // Extraem campos de uma instrução de 32 bits (MIPS-like).
-    string Get_immediate(const uint32_t instruction);
-    string Pick_Code_Register_Load(const uint32_t instruction);
-    string Get_destination_Register(const uint32_t instruction);
-    string Get_target_Register(const uint32_t instruction);
-    string Get_source_Register(const uint32_t instruction);
+    static string Get_immediate(uint32_t instruction);
+    static string Get_destination_Register(uint32_t instruction);
+    static string Get_target_Register(uint32_t instruction);
+    static string Get_source_Register(uint32_t instruction);
 
     // Identifica o mnemonic a partir da palavra de 32 bits (opcode/funct)
-    string Identificacao_instrucao(uint32_t instruction, REGISTER_BANK &registers);
+    string Identificacao_instrucao(uint32_t instruction, REGISTER_BANK &registers) const;
 
     // --- ciclo básico: Fetch, Decode, Execute, Memory, WriteBack ---
     void Fetch(ControlContext &context);                                            // busca instrução da memória

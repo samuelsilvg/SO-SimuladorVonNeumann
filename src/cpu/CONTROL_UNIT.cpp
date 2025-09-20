@@ -13,7 +13,6 @@
                                    preservando o sinal (two's complement).
   - Utilitários para extrair campos da instrução de 32 bits:
       * Get_immediate(...)            -> pega os 16 bits de imediato.
-      * Pick_Code_Register_Load(...)  -> pega o campo rt (bits 11..15).
       * Get_destination_Register(...) -> pega rd (bits 16..20).
       * Get_target_Register(...)      -> pega rt (bits 11..15).
       * Get_source_Register(...)      -> pega rs (bits 6..10).
@@ -85,33 +84,28 @@ static int32_t signExtend16(uint16_t v) { // Sign-extend (transformar sinal com 
         return (int32_t)(v & 0x0000FFFFu);
 }
 // === Implementações de utilitários de extração ===
-string Control_Unit::Get_immediate(const uint32_t instruction) {
+string Control_Unit::Get_immediate(uint32_t instruction) {
     // Retorna os 16 bits menos significativos (posições 16..31) como string de '0'/'1'
     std::string bits = std::bitset<32>(instruction).to_string();
     return bits.substr(16, 16);
 }
-string Control_Unit::Pick_Code_Register_Load(const uint32_t instruction) {
-    // Para instruções de load escolha o campo 'rt' (bits 11..15)
-    std::string bits = std::bitset<32>(instruction).to_string();
-    return bits.substr(11, 5);
-}
-string Control_Unit::Get_destination_Register(const uint32_t instruction) {
+string Control_Unit::Get_destination_Register(uint32_t instruction) {
     // R-type: rd em bits 16..20
     std::string bits = std::bitset<32>(instruction).to_string();
     return bits.substr(16, 5);
 }
-string Control_Unit::Get_target_Register(const uint32_t instruction) {
+string Control_Unit::Get_target_Register(uint32_t instruction) {
     // rt em bits 11..15
     std::string bits = std::bitset<32>(instruction).to_string();
     return bits.substr(11, 5);
 }
-string Control_Unit::Get_source_Register(const uint32_t instruction) {
+string Control_Unit::Get_source_Register(uint32_t instruction) {
     // rs em bits 6..10
     std::string bits = std::bitset<32>(instruction).to_string();
     return bits.substr(6, 5);
 }
 // === Identifica o mnemonic a partir da palavra de 32 bits ===
-string Control_Unit::Identificacao_instrucao(uint32_t instruction, REGISTER_BANK & /*registers*/) {
+string Control_Unit::Identificacao_instrucao(uint32_t instruction, REGISTER_BANK & /*registers*/) const {
     // Converte instrucao para string de bits
     std::string instr_bits = std::bitset<32>(instruction).to_string();
     std::string opcode = instr_bits.substr(0, 6);
@@ -135,6 +129,7 @@ string Control_Unit::Identificacao_instrucao(uint32_t instruction, REGISTER_BANK
         if (funct == "100010") return "SUB";
         if (funct == "011000") return "MULT";
         if (funct == "011010") return "DIV";
+        if (funct == "100100") return "AND"; // AND lógico bit a bit (funct MIPS clássico)
     }
     // Se chegar aqui, instrução desconhecida
     return "";
@@ -166,7 +161,7 @@ void Control_Unit::Decode(REGISTER_BANK &registers, Instruction_Data &data) {
     // Identifica o mnemônico
     data.op = Identificacao_instrucao(instruction, registers);
     // Para instruções R-type (aritméticas) carregamos rs/rt/rd
-    if (data.op == "ADD" || data.op == "SUB" || data.op == "MULT" || data.op == "DIV") {
+    if (data.op == "ADD" || data.op == "SUB" || data.op == "MULT" || data.op == "DIV" || data.op == "AND") {
         data.source_register = Get_source_Register(instruction);
         data.target_register = Get_target_Register(instruction);
         data.destination_register = Get_destination_Register(instruction);
@@ -235,6 +230,12 @@ void Control_Unit::Execute_Aritmetic_Operation(REGISTER_BANK &registers, Instruc
         alu.A = registers.acessoLeituraRegistradores[name_rs]();
         alu.B = registers.acessoLeituraRegistradores[name_rt]();
         alu.op = DIV;
+        alu.calculate();
+        registers.acessoEscritaRegistradores[name_rd](alu.result);
+    } else if (data.op == "AND") {
+        alu.A = registers.acessoLeituraRegistradores[name_rs]();
+        alu.B = registers.acessoLeituraRegistradores[name_rt]();
+        alu.op = AND_OP;
         alu.calculate();
         registers.acessoEscritaRegistradores[name_rd](alu.result);
     }
@@ -309,6 +310,28 @@ void Control_Unit::Execute_Loop_Operation(REGISTER_BANK &registers, Instruction_
         alu.A = registers.acessoLeituraRegistradores[name_rs]();
         alu.B = registers.acessoLeituraRegistradores[name_rt]();
         alu.op = BGT;
+        alu.calculate();
+        if (alu.result == 1) {
+            uint32_t addr = binaryStringToUint(data.addressRAMResult);
+            registers.pc.write(addr);
+            registers.ir.write(ram.ReadMem(registers.pc.read()));
+            counter = 0; counterForEnd = 5; programEnd = false;
+        }
+    } else if (data.op == "BGTI") {
+        alu.A = registers.acessoLeituraRegistradores[name_rs]();
+        alu.B = static_cast<uint32_t>(data.immediate);
+        alu.op = BGTI;
+        alu.calculate();
+        if (alu.result == 1) {
+            uint32_t addr = binaryStringToUint(data.addressRAMResult);
+            registers.pc.write(addr);
+            registers.ir.write(ram.ReadMem(registers.pc.read()));
+            counter = 0; counterForEnd = 5; programEnd = false;
+        }
+    } else if (data.op == "BLTI") {
+        alu.A = registers.acessoLeituraRegistradores[name_rs]();
+        alu.B = static_cast<uint32_t>(data.immediate);
+        alu.op = BLTI;
         alu.calculate();
         if (alu.result == 1) {
             uint32_t addr = binaryStringToUint(data.addressRAMResult);
