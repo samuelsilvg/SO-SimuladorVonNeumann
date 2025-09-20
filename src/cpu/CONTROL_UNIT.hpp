@@ -8,8 +8,8 @@
   implementação fica no .cpp, onde você conhece as APIs concretas.
 */
 
-#include "ULA.hpp"
 #include "REGISTER_BANK.hpp"
+#include "ULA.hpp"
 #include "HASH_REGISTER.hpp"     // contém 'Map' (mapa código->nome do registrador)
 #include <unordered_map>
 #include <string>
@@ -23,6 +23,7 @@ using std::uint32_t;
 using std::unique_ptr;
 
 /* Forward declarations (mantém o header leve; inclua os headers reais no .cpp) */
+class REGISTER_BANK;
 class MainMemory;
 struct PCB;
 struct ioRequest;
@@ -58,7 +59,7 @@ struct ControlContext {
 struct Control_Unit {
     operation op;                    // operação atual (do enum em ULA.hpp)
     vector<Instruction_Data> data;   // buffer simples de insstruções
-    Map map;                         // mapa de códigos -> nomes de registradores
+    Map<string, string> map;          // mapa de códigos -> nomes de registradores
 
     // mnemônicos -> opcode (string binária ou código simbólico)
     std::unordered_map<string, string> instructionMap = {
