@@ -59,8 +59,6 @@ namespace hw{
         // Construtor: Declarado aqui, implementado no .cpp
         REGISTER_BANK();
 
-        // --- Métodos de acesso e utilitários ---
-
         // Leitura segura por nome.
         uint32_t readRegister(const string &name) const;
 
