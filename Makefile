@@ -5,6 +5,7 @@ CXXFLAGS := -Wall -Wextra -g -std=c++17 -Isrc
 # Alvos principais
 TARGET := teste
 TARGET_HASH := test_hash_register
+TARGET_BANK := test_register_bank
 
 # Fontes principais
 SRC := src/teste.cpp src/cpu/ULA.cpp
@@ -13,6 +14,10 @@ OBJ := $(SRC:.cpp=.o)
 # Fontes para teste do hash register
 SRC_HASH := src/test_hash_register.cpp
 OBJ_HASH := $(SRC_HASH:.cpp=.o)
+
+# Fontes para teste do register bank
+SRC_BANK := src/test_register_bank.cpp src/cpu/REGISTER_BANK.cpp
+OBJ_BANK := $(SRC_BANK:.cpp=.o)
 
 # Make clean -> make -> make run
 all: clean $(TARGET) run
@@ -25,12 +30,16 @@ $(TARGET): $(OBJ)
 $(TARGET_HASH): $(OBJ_HASH)
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJ_HASH)
 
+# Regra para o teste do register bank
+$(TARGET_BANK): $(OBJ_BANK)
+	$(CXX) $(CXXFLAGS) -o $@ $(OBJ_BANK)
+
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	@echo "🧹 Limpando arquivos antigos..."
-	@rm -f $(OBJ) $(OBJ_HASH) $(TARGET) $(TARGET_HASH)
+	@rm -f $(OBJ) $(OBJ_HASH) $(TARGET) $(TARGET_HASH) $(TARGET_BANK)
 
 run:
 	@echo "🚀 Executando o programa..."
@@ -41,6 +50,11 @@ test-hash: clean $(TARGET_HASH)
 	@echo "🧪 Executando teste do Hash Register..."
 	@./$(TARGET_HASH)
 
+# Teste específico para register bank
+test-bank: clean $(TARGET_BANK)
+	@echo "🧪 Executando teste do Register Bank..."
+	@./$(TARGET_BANK)
+
 # Testa ambos os programas
 test-all: clean $(TARGET) $(TARGET_HASH)
 	@echo "🚀 Executando programa principal..."
@@ -48,6 +62,9 @@ test-all: clean $(TARGET) $(TARGET_HASH)
 	@echo ""
 	@echo "🧪 Executando teste do Hash Register..."
 	@./$(TARGET_HASH)
+	@echo ""
+	@echo "🧪 Executando teste do Register Bank..."
+	@./$(TARGET_BANK)
 
 # Comando de ajuda
 help:
@@ -58,6 +75,7 @@ help:
 	@echo "  make run          - Executa programa principal (sem recompilar)"
 	@echo "  make teste        - Compila apenas o programa principal"
 	@echo "  make test-hash    - Compila e testa sistema de registradores"
+	@echo "  make test-bank    - Compila e testa o banco de registradores"
 	@echo "  make test-all     - Executa todos os testes disponíveis"
 	@echo "  make check        - Verificação rápida de todos os componentes"
 	@echo "  make debug        - Build com símbolos de debug (-g -O0)"
@@ -73,6 +91,7 @@ check: $(TARGET) $(TARGET_HASH)
 	@echo "✅ Executando verificações rápidas..."
 	@echo -n "  Teste principal: "; ./$(TARGET) >/dev/null 2>&1 && echo "✅ PASSOU" || echo "❌ FALHOU"
 	@echo -n "  Teste hash register: "; ./$(TARGET_HASH) >/dev/null 2>&1 && echo "✅ PASSOU" || echo "❌ FALHOU"
+	@echo -n "  Teste register bank: "; ./$(TARGET_BANK) >/dev/null 2>&1 && echo "✅ PASSOU" || echo "❌ FALHOU"
 	@echo "🎯 Verificação concluída!"
 
 # Build com debug symbols
