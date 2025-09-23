@@ -9,6 +9,7 @@
 
 ### **Comandos de Teste**
 - `make test-hash` - Compila e testa sistema de registradores MIPS
+- `make test-bank` - Compila e testa sistema de banco registradores
 - `make test-all` - Executa todos os testes disponíveis
 - `make check` - Verificação rápida (✅ PASSOU/❌ FALHOU)
 
@@ -50,6 +51,7 @@ make help          # Ver todos os comandos
 | `make help` | Lista comandos | Primeiro uso |
 | `make` | Compila e executa | Desenvolvimento |
 | `make test-hash` | Testa registradores | Validar MIPS |
+| `make test-bank` | Testa banco registradores | Validar MIPS |
 | `make check` | Verificação rápida | Testes automáticos |
 | `make debug` | Build debug | Debugging |
 | `make clean` | Limpa arquivos | Rebuild |
