@@ -110,6 +110,14 @@ struct PCB {
     std::atomic<uint64_t> mem_accesses_total{0}; // total de acessos
     // opcional: contador total de ciclos (mem + pipeline)
     std::atomic<uint64_t> extra_cycles{0};
+    // pipeline_cycles: conta cada iteração do loop principal (um ciclo global)
+    std::atomic<uint64_t> pipeline_cycles{0};
+    // stage_invocations: conta cada vez que um estágio do pipeline é chamado (IF, ID, EX, MEM, WB)
+    std::atomic<uint64_t> stage_invocations{0};
+    // mem_reads: quantidade de leituras de memória (ReadMem)
+    std::atomic<uint64_t> mem_reads{0};
+    // mem_writes: quantidade de escritas de memória (WriteMem)
+    std::atomic<uint64_t> mem_writes{0};
 
     // Pesos configuráveis (do JSON)
     MemWeights memWeights;
@@ -175,14 +183,22 @@ static int32_t sign_extend(uint32_t value, unsigned bits) {
 static inline void account_memory_access(MainMemory &ram, PCB &process, uint32_t addr, bool isWrite = false) {
     bool secondary = ram.IsSecondary(addr);
     process.mem_accesses_total.fetch_add(1);
+    // Atualiza leituras ou escritas
+    if (isWrite) process.mem_writes.fetch_add(1); else process.mem_reads.fetch_add(1);
     if (secondary) {
         process.secondary_mem_accesses.fetch_add(1);
-        process.memory_cycles.fetch_add(process.memWeights.secondary);
+        process.memory_cycles.fetch_add(process.memWeights.secondary); // custo de acesso secundário
     } else {
         process.primary_mem_accesses.fetch_add(1);
-        process.memory_cycles.fetch_add(process.memWeights.primary);
+        process.memory_cycles.fetch_add(process.memWeights.primary);   // custo de acesso primário
     }
 }
+
+// --- Helpers adicionais de instrumentação (pipeline) ---
+// account_pipeline_cycle: chamado uma vez por ciclo global do loop Core
+static inline void account_pipeline_cycle(PCB &p) { p.pipeline_cycles.fetch_add(1); }
+// account_stage: chamado a cada estágio executado (IF, ID, EX, MEM, WB)
+static inline void account_stage(PCB &p) { p.stage_invocations.fetch_add(1); }
 
 // === Implementações de utilitários de extração ===
 // (as implementações abaixo usam bitwise)
@@ -246,6 +262,8 @@ string Control_Unit::Identificacao_instrucao(uint32_t instruction, REGISTER_BANK
 // === Estágios do Pipeline ===
 // IF: busca a instrucao na memória usando PC e grava em IR
 void Control_Unit::Fetch(ControlContext &context) {
+    // Instrumentação: conta estágio IF
+    account_stage(context.process);
     // Primeiro coloca o MAR com o PC
     context.registers.mar.write(context.registers.pc.value);
     // Lê a memória
@@ -355,6 +373,8 @@ void Control_Unit::Execute_Aritmetic_Operation(REGISTER_BANK &registers, Instruc
 
 // EX / SYSCALL / IO: aqui tratamos PRINT e operações que causam I/O
 void Control_Unit::Execute_Operation(Instruction_Data &data, ControlContext &context) {
+    // Instrumentação: conta estágio EX (operação específica PRINT/syscall)
+    // (dispatcher já contou uma vez para EX; não duplicar aqui para manter métrica coesa)
     if (data.op == "PRINT") {
         // Se target_register está preenchido -> imprimir registrador
         if (!data.target_register.empty()) {
@@ -376,7 +396,9 @@ void Control_Unit::Execute_Operation(Instruction_Data &data, ControlContext &con
 }
 
 // EX: branches e jumps. Usamos a ALU para calcular condições
-void Control_Unit::Execute_Loop_Operation(REGISTER_BANK &registers, Instruction_Data &data, int &counter, int &counterForEnd, bool &programEnd, MainMemory &ram) {
+void Control_Unit::Execute_Loop_Operation(REGISTER_BANK &registers, Instruction_Data &data,
+                                          int &counter, int &counterForEnd, bool &programEnd,
+                                          MainMemory &ram, PCB &process) {
     std::string name_rs = this->map.mp[data.source_register];
     std::string name_rt = this->map.mp[data.target_register];
 
@@ -433,15 +455,21 @@ void Control_Unit::Execute_Loop_Operation(REGISTER_BANK &registers, Instruction_
             counter = 0; counterForEnd = 5; programEnd = false;
         }
     }
+    // Observação: contabilização de acesso após mudança de PC (pré-decode da próxima instrução)
+    // O acesso de memória real do próximo ciclo será no Fetch, mas se a lógica de branch aqui realizar
+    // um ReadMem antecipado (já feito no write do IR) contabilizamos este acesso:
+    // Conta o acesso antecipado ao carregar a próxima instrução (já fizemos ReadMem ao atualizar IR)
     account_memory_access(ram, process, registers.pc.read());
 }
 
 // Dispatcher: decide qual caminho seguir para a instrução
 void Control_Unit::Execute(Instruction_Data &data, ControlContext &context) {
+    // Instrumentação: conta estágio EX (apenas uma vez por dispatcher)
+    account_stage(context.process);
     if (data.op == "ADD" || data.op == "SUB" || data.op == "MULT" || data.op == "DIV") {
         Execute_Aritmetic_Operation(context.registers, data);
     } else if (data.op == "BEQ" || data.op == "J" || data.op == "BNE" || data.op == "BGT" || data.op == "BGTI" || data.op == "BLT" || data.op == "BLTI") {
-        Execute_Loop_Operation(context.registers, data, context.counter, context.counterForEnd, context.endProgram, context.ram);
+    Execute_Loop_Operation(context.registers, data, context.counter, context.counterForEnd, context.endProgram, context.ram, context.process);
     } else if (data.op == "PRINT") {
         Execute_Operation(data, context);
     }
@@ -449,11 +477,14 @@ void Control_Unit::Execute(Instruction_Data &data, ControlContext &context) {
 
  // MEM: acessos à memória (load/store) e operações relacionadas
 void Control_Unit::Memory_Acess(Instruction_Data &data, ControlContext &context) {
+    // Instrumentação: conta estágio MEM
+    account_stage(context.process);
     // Se target_register estiver vazio e for PRINT, tratamos leitura de memória para impressão
     std::string name_rt = this->map.mp[data.target_register];
     if (data.op == "LW") {
         uint32_t addr = binaryStringToUint(data.addressRAMResult);
         int value = context.ram.ReadMem(addr);
+        account_memory_access(context.ram, context.process, addr, false);
         // Escreve no registrador destino (rt)
         context.registers.acessoEscritaRegistradores[name_rt](value);
     } else if (data.op == "LA" || data.op == "LI") {
@@ -463,6 +494,7 @@ void Control_Unit::Memory_Acess(Instruction_Data &data, ControlContext &context)
     } else if (data.op == "PRINT" && data.target_register.empty()) {
         uint32_t addr = binaryStringToUint(data.addressRAMResult);
         int value = context.ram.ReadMem(addr);
+        account_memory_access(context.ram, context.process, addr, false);
         auto req = std::make_unique<ioRequest>();
         req->msg = std::to_string(value);
         req->process = &context.process;
@@ -477,11 +509,14 @@ void Control_Unit::Memory_Acess(Instruction_Data &data, ControlContext &context)
 // WB: grava resultados que eventualmente precisam voltar para a memória (no projeto original, SW 
 // é tratado aqui como write back para memória)
 void Control_Unit::Write_Back(Instruction_Data &data, ControlContext &context) {
+    // Instrumentação: conta estágio WB
+    account_stage(context.process);
     if (data.op == "SW") {
         uint32_t addr = binaryStringToUint(data.addressRAMResult);
         std::string name_rt = this->map.mp[data.target_register];
         int value = context.registers.acessoLeituraRegistradores[name_rt]();
         context.ram.WriteMem(addr, value);
+        account_memory_access(context.ram, context.process, addr, true);
     }
 }
 
@@ -545,6 +580,8 @@ void* Core(MainMemory &ram, PCB &process, vector<unique_ptr<ioRequest>>* ioReque
 
         // --- DECODE (estágio 2)
         if (context.counter >= 1 && context.counterForEnd >= 4) {
+            // Instrumentação: conta estágio ID
+            account_stage(process);
             // Decode lê o IR atual do registro e preenche o Instruction_Data
             UC.Decode(context.registers, UC.data[context.counter - 1]);
         }
@@ -553,6 +590,7 @@ void* Core(MainMemory &ram, PCB &process, vector<unique_ptr<ioRequest>>* ioReque
         // Só fazemos fetch de uma nova instrução enquanto estivermos aceitando
         // novas instruções (counterForEnd == 5 significa que pipeline está aberto)
         if (context.counter >= 0 && context.counterForEnd == 5) {
+            // Instrumentação: conta estágio IF (Fetch) já é feita dentro de Fetch
             // empurra um slot vazio no buffer e faz o fetch que grava IR no registrador
             UC.data.push_back(data);
             UC.Fetch(context);
@@ -562,6 +600,8 @@ void* Core(MainMemory &ram, PCB &process, vector<unique_ptr<ioRequest>>* ioReque
         // avança o tempo do pipeline
         context.counter += 1;
         clock += 1;
+    // Instrumentação: contabiliza um ciclo global do pipeline
+    account_pipeline_cycle(process);
 
         // se atingimos o quantum do processo, ou achamos END, sinalizar para terminar
         if (clock >= process.quantum || context.endProgram == true) {
