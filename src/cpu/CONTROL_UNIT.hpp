@@ -84,7 +84,9 @@ struct Control_Unit {
     void Decode(REGISTER_BANK &registers, Instruction_Data &data);                  // decodifica campos
     void Execute_Aritmetic_Operation(REGISTER_BANK &registers, Instruction_Data &d); // usa ULA para ALU-ops
     void Execute_Operation(Instruction_Data &data, ControlContext &context);       // branches / jumps / syscalls
-    void Execute_Loop_Operation(REGISTER_BANK &registers, Instruction_Data &d, int &counter, int &counterForEnd, bool& endProgram, MainMemory& ram);
+    void Execute_Loop_Operation(REGISTER_BANK &registers, Instruction_Data &d,
+                                int &counter, int &counterForEnd, bool &endProgram,
+                                MainMemory &ram, PCB &process); // adiciona PCB p/ instrumentação
     void Execute(Instruction_Data &data, ControlContext &context);                 // dispatcher de execução
     void Memory_Acess(Instruction_Data &data, ControlContext &context);           // LW / SW (depende de MainMemory)
     void Write_Back(Instruction_Data &data, ControlContext &context);             // grava resultado no banco de registradores
