@@ -68,61 +68,8 @@
 */
 
 // Implementação da leitura do PCB (alinhar com I/O)
-#include <nlohmann/json.hpp>
+#include "pcb_loader.hpp" // função load_pcb_from_json centralizada
 #include <fstream>
-
-using json = nlohmann::json;
-
-bool load_pcb_from_json(const std::string &path, PCB &pcb) {
-    std::ifstream f(path);
-    if (!f.is_open()) return false;
-    json j; f >> j;
-
-    pcb.pid = j.value("pid", 0);
-    pcb.name = j.value("name", std::string("unknown"));
-    pcb.quantum = j.value("quantum", 50);
-    pcb.priority = j.value("priority", 0);
-    pcb.memWeights.primary = j["mem_weights"].value("primary", 1ULL);
-    pcb.memWeights.secondary = j["mem_weights"].value("secondary", 10ULL);
-    return true;
-}
-
-// PCB.hpp (apenas os campos que vamos adicionar)
-#include <atomic>
-#include <string>
-#include <vector>
-#include <cstdint>
-
-struct MemWeights {
-    uint64_t primary = 1;
-    uint64_t secondary = 10;
-};
-
-struct PCB {
-    int pid;
-    std::string name;
-    int quantum;
-    int priority;
-    // --- Contadores atômicos (thread-safe)
-    std::atomic<uint64_t> primary_mem_accesses{0};
-    std::atomic<uint64_t> secondary_mem_accesses{0};
-    std::atomic<uint64_t> memory_cycles{0}; // soma (weights)
-    std::atomic<uint64_t> mem_accesses_total{0}; // total de acessos
-    // opcional: contador total de ciclos (mem + pipeline)
-    std::atomic<uint64_t> extra_cycles{0};
-    // pipeline_cycles: conta cada iteração do loop principal (um ciclo global)
-    std::atomic<uint64_t> pipeline_cycles{0};
-    // stage_invocations: conta cada vez que um estágio do pipeline é chamado (IF, ID, EX, MEM, WB)
-    std::atomic<uint64_t> stage_invocations{0};
-    // mem_reads: quantidade de leituras de memória (ReadMem)
-    std::atomic<uint64_t> mem_reads{0};
-    // mem_writes: quantidade de escritas de memória (WriteMem)
-    std::atomic<uint64_t> mem_writes{0};
-
-    // Pesos configuráveis (do JSON)
-    MemWeights memWeights;
-};
-
 
 #include "CONTROL_UNIT.hpp"
 #include "MainMemory.hpp"   // Incluir a definição concreta quando estiver pronto (ou seja, provisório)
