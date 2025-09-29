@@ -1,0 +1,14 @@
+{
+	"pid": 1,
+	"name": "cpu-metrics",
+	"quantum": 50,
+	"priority": 0,
+	"mem_weights": {
+		"primary": 1,
+		"secondary": 10
+	},
+	"tasks": [
+		{ "type": "run_code", "start_addr": 0, "end_addr": 32 },
+		{ "type": "io", "device": "printer", "when": 8 }
+	]
+}
