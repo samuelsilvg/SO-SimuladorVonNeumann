@@ -1,9 +1,9 @@
-#include <stdio.h>
+#include <iostream>
+#include "cpu/ULA.hpp"
 
 int main() {
-    printf("========================================\n");
-    printf("✅ Dev Container funcionando!\n");
-    printf("O Makefile limpou, compilou e executou.\n");
-    printf("========================================\n");
+    ALU alu;
+    alu.execute(ADD, 10, 20, 0);
+    std::cout << "Resultado do ADD: " << alu.result << ", Overflow: " << alu.overflow << std::endl;
     return 0;
 }

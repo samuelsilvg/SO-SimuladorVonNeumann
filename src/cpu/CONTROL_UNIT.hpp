@@ -8,8 +8,8 @@
   implementação fica no .cpp, onde você conhece as APIs concretas.
 */
 
-#include "ULA.hpp"
 #include "REGISTER_BANK.hpp"
+#include "ULA.hpp"
 #include "HASH_REGISTER.hpp"     // contém 'Map' (mapa código->nome do registrador)
 #include <unordered_map>
 #include <string>
@@ -23,6 +23,7 @@ using std::uint32_t;
 using std::unique_ptr;
 
 /* Forward declarations (mantém o header leve; inclua os headers reais no .cpp) */
+class REGISTER_BANK;
 class MainMemory;
 struct PCB;
 struct ioRequest;
@@ -56,9 +57,8 @@ struct ControlContext {
 
 /* Unidade de Controle */
 struct Control_Unit {
-    operation op;                    // operação atual (do enum em ULA.hpp)
     vector<Instruction_Data> data;   // buffer simples de insstruções
-    Map map;                         // mapa de códigos -> nomes de registradores
+    Map<string, string> map;          // mapa de códigos -> nomes de registradores
 
     // mnemônicos -> opcode (string binária ou código simbólico)
     std::unordered_map<string, string> instructionMap = {
@@ -71,21 +71,22 @@ struct Control_Unit {
 
     // --- utilitários de extração (apenas assinaturas; implementar no .cpp) ---
     // Extraem campos de uma instrução de 32 bits (MIPS-like).
-    string Get_immediate(const uint32_t instruction);
-    string Pick_Code_Register_Load(const uint32_t instruction);
-    string Get_destination_Register(const uint32_t instruction);
-    string Get_target_Register(const uint32_t instruction);
-    string Get_source_Register(const uint32_t instruction);
+    static string Get_immediate(uint32_t instruction);
+    static string Get_destination_Register(uint32_t instruction);
+    static string Get_target_Register(uint32_t instruction);
+    static string Get_source_Register(uint32_t instruction);
 
     // Identifica o mnemonic a partir da palavra de 32 bits (opcode/funct)
-    string Identificacao_instrucao(uint32_t instruction, REGISTER_BANK &registers);
+    string Identificacao_instrucao(uint32_t instruction, REGISTER_BANK &registers) const;
 
     // --- ciclo básico: Fetch, Decode, Execute, Memory, WriteBack ---
     void Fetch(ControlContext &context);                                            // busca instrução da memória
     void Decode(REGISTER_BANK &registers, Instruction_Data &data);                  // decodifica campos
     void Execute_Aritmetic_Operation(REGISTER_BANK &registers, Instruction_Data &d); // usa ULA para ALU-ops
     void Execute_Operation(Instruction_Data &data, ControlContext &context);       // branches / jumps / syscalls
-    void Execute_Loop_Operation(REGISTER_BANK &registers, Instruction_Data &d, int &counter, int &counterForEnd, bool& endProgram, MainMemory& ram);
+    void Execute_Loop_Operation(REGISTER_BANK &registers, Instruction_Data &d,
+                                int &counter, int &counterForEnd, bool &endProgram,
+                                MainMemory &ram, PCB &process); // adiciona PCB p/ instrumentação
     void Execute(Instruction_Data &data, ControlContext &context);                 // dispatcher de execução
     void Memory_Acess(Instruction_Data &data, ControlContext &context);           // LW / SW (depende de MainMemory)
     void Write_Back(Instruction_Data &data, ControlContext &context);             // grava resultado no banco de registradores
