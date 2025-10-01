@@ -1,0 +1,3 @@
+/home/eduardo/Downloads/Trabalho SO 1/Trabalho SO 1/Parser-Json---MIPS/build/CMakeFiles/trabalho1.dir
+/home/eduardo/Downloads/Trabalho SO 1/Trabalho SO 1/Parser-Json---MIPS/build/CMakeFiles/edit_cache.dir
+/home/eduardo/Downloads/Trabalho SO 1/Trabalho SO 1/Parser-Json---MIPS/build/CMakeFiles/rebuild_cache.dir
