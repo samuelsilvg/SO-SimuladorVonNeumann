@@ -10,7 +10,7 @@ public:
     CachePolicy();
     ~CachePolicy();
 
-    void erase(std::unordered_map<size_t, CacheEntry> &cacheMap);
+    bool erase(std::unordered_map<size_t, CacheEntry> &cacheMap);
 
 };
 
