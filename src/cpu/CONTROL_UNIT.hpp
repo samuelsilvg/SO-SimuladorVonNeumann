@@ -10,7 +10,9 @@
 
 #include "REGISTER_BANK.hpp"
 #include "ULA.hpp"
+#include "ULA.hpp"
 #include "HASH_REGISTER.hpp"     // contém 'Map' (mapa código->nome do registrador)
+#include "cache/cache.hpp"      // inclui cacheMemory.hpp
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -59,6 +61,7 @@ struct ControlContext {
 struct Control_Unit {
     vector<Instruction_Data> data;   // buffer simples de insstruções
     Map<string, string> map;          // mapa de códigos -> nomes de registradores
+    Map<string, string> map;          // mapa de códigos -> nomes de registradores
 
     // mnemônicos -> opcode (string binária ou código simbólico)
     std::unordered_map<string, string> instructionMap = {
@@ -75,8 +78,13 @@ struct Control_Unit {
     static string Get_destination_Register(uint32_t instruction);
     static string Get_target_Register(uint32_t instruction);
     static string Get_source_Register(uint32_t instruction);
+    static string Get_immediate(uint32_t instruction);
+    static string Get_destination_Register(uint32_t instruction);
+    static string Get_target_Register(uint32_t instruction);
+    static string Get_source_Register(uint32_t instruction);
 
     // Identifica o mnemonic a partir da palavra de 32 bits (opcode/funct)
+    string Identificacao_instrucao(uint32_t instruction, REGISTER_BANK &registers) const;
     string Identificacao_instrucao(uint32_t instruction, REGISTER_BANK &registers) const;
 
     // --- ciclo básico: Fetch, Decode, Execute, Memory, WriteBack ---
