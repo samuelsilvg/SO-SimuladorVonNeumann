@@ -72,7 +72,7 @@
 #include <fstream>
 
 #include "CONTROL_UNIT.hpp"
-#include "MainMemory.hpp"   // Incluir a definição concreta quando estiver pronto (ou seja, provisório)
+#include "memory/MemoryManager.hpp"   // Incluir a definição concreta quando estiver pronto (ou seja, provisório)
 #include "PCB.hpp" // PCB = Process Control Block (ou bloco de controle de processo).
 #include "ioRequest.hpp" // Estrutura para requisições de I/O
 
@@ -214,10 +214,10 @@ void Control_Unit::Fetch(ControlContext &context) {
     // Primeiro coloca o MAR com o PC
     context.registers.mar.write(context.registers.pc.value);
     // Lê a memória
-    uint32_t instr = context.ram.ReadMem(context.registers.mar.read());
+    uint32_t instr = context.memManager.read(context.registers.mar.read());
     // Escreve no registrador IR
     context.registers.ir.write(instr);
-    account_memory_access(context.ram, context.process, context.registers.mar.read());
+    account_memory_access(context.memManager, context.process, context.registers.mar.read());
     // Checa sentinel de fim de programa (padrão usado no projeto)
     const uint32_t END_SENTINEL = 0b11111100000000000000000000000000u;
     if (instr == END_SENTINEL) {
@@ -430,7 +430,7 @@ void Control_Unit::Memory_Acess(Instruction_Data &data, ControlContext &context)
     std::string name_rt = this->map.mp[data.target_register];
     if (data.op == "LW") {
         uint32_t addr = binaryStringToUint(data.addressRAMResult);
-        int value = context.ram.ReadMem(addr);
+        int value =context.memManager.read(addr);
         account_memory_access(context.ram, context.process, addr, false);
         // Escreve no registrador destino (rt)
         context.registers.acessoEscritaRegistradores[name_rt](value);
@@ -440,7 +440,7 @@ void Control_Unit::Memory_Acess(Instruction_Data &data, ControlContext &context)
         context.registers.acessoEscritaRegistradores[name_rt](static_cast<int>(val));
     } else if (data.op == "PRINT" && data.target_register.empty()) {
         uint32_t addr = binaryStringToUint(data.addressRAMResult);
-        int value = context.ram.ReadMem(addr);
+        int value =context.memManager.read(addr);
         account_memory_access(context.ram, context.process, addr, false);
         auto req = std::make_unique<ioRequest>();
         req->msg = std::to_string(value);
@@ -462,8 +462,8 @@ void Control_Unit::Write_Back(Instruction_Data &data, ControlContext &context) {
         uint32_t addr = binaryStringToUint(data.addressRAMResult);
         std::string name_rt = this->map.mp[data.target_register];
         int value = context.registers.acessoLeituraRegistradores[name_rt]();
-        context.ram.WriteMem(addr, value);
-        account_memory_access(context.ram, context.process, addr, true);
+        context.memManager.write(addr, value);
+        account_memory_access(context.memManager, context.process, addr, true);
     }
 }
 

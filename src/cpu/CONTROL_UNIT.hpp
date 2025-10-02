@@ -24,12 +24,12 @@ using std::unique_ptr;
 
 /* Forward declarations (mantém o header leve; inclua os headers reais no .cpp) */
 class REGISTER_BANK;
-class MainMemory;
+class MemoryManager; // substitui MemoryManager
 struct PCB;
 struct ioRequest;
 
 /* Função principal do core (assinatura dependente da memória) */
-void* Core(MainMemory &ram, PCB &process, vector<unique_ptr<ioRequest>>* ioRequests, bool &printLock);
+void* Core(MemoryManager &memoryManager, PCB &process, vector<unique_ptr<ioRequest>>* ioRequests, bool &printLock);
 
 /* Estrutura para guardar dados da instrução entre estágios */
 struct Instruction_Data {
@@ -45,7 +45,7 @@ struct Instruction_Data {
 /* Contexto de execução passado para métodos que precisam de recursos */
 struct ControlContext {
     REGISTER_BANK &registers;
-    MainMemory &ram;
+    MemoryManager &ram;
     vector<unique_ptr<ioRequest>> &ioRequests;
     bool &printLock;
     PCB &process;
@@ -86,9 +86,9 @@ struct Control_Unit {
     void Execute_Operation(Instruction_Data &data, ControlContext &context);       // branches / jumps / syscalls
     void Execute_Loop_Operation(REGISTER_BANK &registers, Instruction_Data &d,
                                 int &counter, int &counterForEnd, bool &endProgram,
-                                MainMemory &ram, PCB &process); // adiciona PCB p/ instrumentação
+                                MemoryManager &ram, PCB &process); // adiciona PCB p/ instrumentação
     void Execute(Instruction_Data &data, ControlContext &context);                 // dispatcher de execução
-    void Memory_Acess(Instruction_Data &data, ControlContext &context);           // LW / SW (depende de MainMemory)
+    void Memory_Acess(Instruction_Data &data, ControlContext &context);           // LW / SW (depende de MemoryManager)
     void Write_Back(Instruction_Data &data, ControlContext &context);             // grava resultado no banco de registradores
 };
 
