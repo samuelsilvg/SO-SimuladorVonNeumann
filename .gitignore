@@ -1,0 +1,12 @@
+# Arquivos compilados e de build
+*.o
+teste
+test_hash_register
+test_register_bank
+build/
+
+# Arquivos do VS Code
+.vscode/
+
+# Arquivos de sistema
+.DS_Store
