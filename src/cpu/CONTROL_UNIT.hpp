@@ -10,7 +10,7 @@
 
 #include "REGISTER_BANK.hpp"
 #include "ULA.hpp"
-#include "ULA.hpp"
+
 #include "HASH_REGISTER.hpp"     // contém 'Map' (mapa código->nome do registrador)
 #include "cache/cache.hpp"      // inclui cacheMemory.hpp
 #include <unordered_map>
