@@ -11,6 +11,7 @@
 #include "REGISTER_BANK.hpp"
 #include "ULA.hpp"
 #include "HASH_REGISTER.hpp"     // contém 'Map' (mapa código->nome do registrador)
+#include "cache/cache.hpp"      // inclui cacheMemory.hpp
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -46,6 +47,7 @@ struct Instruction_Data {
 struct ControlContext {
     REGISTER_BANK &registers;
     MainMemory &ram;
+    Cache &cache;
     vector<unique_ptr<ioRequest>> &ioRequests;
     bool &printLock;
     PCB &process;

@@ -72,10 +72,9 @@
 #include <fstream>
 
 #include "CONTROL_UNIT.hpp"
-#include "MainMemory.hpp"   // Incluir a definição concreta quando estiver pronto (ou seja, provisório)
+#include "../memory/MainMemory.hpp"   // Incluir a definição concreta quando estiver pronto (ou seja, provisório)
 #include "PCB.hpp" // PCB = Process Control Block (ou bloco de controle de processo).
 #include "ioRequest.hpp" // Estrutura para requisições de I/O
-
 #include <bitset>
 #include <cmath>
 #include <stdexcept>
@@ -139,6 +138,18 @@ static inline void account_memory_access(MainMemory &ram, PCB &process, uint32_t
         process.primary_mem_accesses.fetch_add(1);
         process.memory_cycles.fetch_add(process.memWeights.primary);   // custo de acesso primário
     }
+}
+
+
+// Adicionando Helper de contagem de acesso à memória cache (PCB)
+static inline void account_cache_access(Cache &cache, PCB &process, uint32_t addr, bool isWrite = false) {
+    process.mem_accesses_total.fetch_add(1);
+    // Atualiza leituras ou escritas
+    if (isWrite) process.mem_writes.fetch_add(1); else process.mem_reads.fetch_add(1); 
+    // Acesso à memória cache
+    process.cache_mem_accesses.fetch_add(1);
+
+    process.memory_cycles.fetch_add(process.memWeights.cache);   // custo de acesso cache
 }
 
 // --- Helpers adicionais de instrumentação (pipeline) ---
@@ -430,21 +441,39 @@ void Control_Unit::Memory_Acess(Instruction_Data &data, ControlContext &context)
     std::string name_rt = this->map.mp[data.target_register];
     if (data.op == "LW") {
         uint32_t addr = binaryStringToUint(data.addressRAMResult);
-        int value = context.ram.ReadMem(addr);
-        account_memory_access(context.ram, context.process, addr, false);
-        // Escreve no registrador destino (rt)
-        context.registers.acessoEscritaRegistradores[name_rt](value);
+        if(context.cache.get(addr) != -1) {
+            // Cache hit
+            int value = context.cache.get(addr);
+            context.registers.acessoEscritaRegistradores[name_rt](value);
+        } else {
+            // Cache miss
+            int value = context.ram.ReadMem(addr);
+            account_memory_access(context.ram, context.process, addr, false);
+            context.cache.put(addr, value, context.process.memory_cycles.load());
+            // Escreve no registrador destino (rt)
+            context.registers.acessoEscritaRegistradores[name_rt](value);
+        }
     } else if (data.op == "LA" || data.op == "LI") {
         // LA/LI colocam o imediato (endereco ou valor) direto no registrador
         uint32_t val = binaryStringToUint(data.addressRAMResult);
         context.registers.acessoEscritaRegistradores[name_rt](static_cast<int>(val));
     } else if (data.op == "PRINT" && data.target_register.empty()) {
         uint32_t addr = binaryStringToUint(data.addressRAMResult);
-        int value = context.ram.ReadMem(addr);
-        account_memory_access(context.ram, context.process, addr, false);
-        auto req = std::make_unique<ioRequest>();
-        req->msg = std::to_string(value);
-        req->process = &context.process;
+        if(context.cache.get(addr) != -1) {
+            // Cache hit
+            int value = context.cache.get(addr);
+            auto req = std::make_unique<ioRequest>();
+            req->msg = std::to_string(value);
+            req->process = &context.process;
+        } else {
+            // Cache miss
+            int value = context.ram.ReadMem(addr);
+            account_memory_access(context.ram, context.process, addr, false);
+            context.cache.put(addr, value, context.process.memory_cycles.load());
+            auto req = std::make_unique<ioRequest>();
+            req->msg = std::to_string(value);
+            req->process = &context.process;
+        }
         context.ioRequests.push_back(std::move(req));
         if (context.printLock) {
             context.process.state = State::Blocked;
@@ -452,6 +481,8 @@ void Control_Unit::Memory_Acess(Instruction_Data &data, ControlContext &context)
         }
     }
 }
+
+
 
 // WB: grava resultados que eventualmente precisam voltar para a memória (no projeto original, SW 
 // é tratado aqui como write back para memória)
@@ -490,6 +521,8 @@ void Control_Unit::Write_Back(Instruction_Data &data, ControlContext &context) {
 void* Core(MainMemory &ram, PCB &process, vector<unique_ptr<ioRequest>>* ioRequests, bool &printLock) {
     // pega referência direta ao banco de registradores do processo
     auto &registers = process.regBank;
+    // pega referência direta à cache do processo
+    Cache &cache = *new Cache();
 
     // cria unidade de controle e um template de Instruction_Data
     Control_Unit UC;
@@ -503,7 +536,7 @@ void* Core(MainMemory &ram, PCB &process, vector<unique_ptr<ioRequest>>* ioReque
     bool endExecution = false; // sinaliza para iniciar o esvaziamento do pipeline
 
     // monta o contexto que será passado a todos os métodos
-    ControlContext context{ registers, ram, *ioRequests, printLock, process, counter, counterForEnd, endProgram, endExecution };
+    ControlContext context{ registers, ram, cache, *ioRequests, printLock, process, counter, counterForEnd, endProgram, endExecution };
 
     // Enquanto houver instruções em voo no pipeline (counterForEnd > 0)
     while (context.counterForEnd > 0) {

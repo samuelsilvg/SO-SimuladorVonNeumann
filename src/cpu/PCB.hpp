@@ -20,8 +20,11 @@ enum class State {
     Finished
 };
 
+
+// Adicionando custo de acesso à memória cache
 struct MemWeights {
-    uint64_t primary = 1;   // custo por acesso à memória primária
+    uint64_t cache = 1;   // custo por acesso à memória cache
+    uint64_t primary = 5; // custo por acesso à memória primária
     uint64_t secondary = 10; // custo por acesso à memória secundária
 };
 
@@ -43,6 +46,7 @@ struct PCB {
     std::atomic<uint64_t> memory_cycles{0};      // soma ponderada pelos pesos
     std::atomic<uint64_t> mem_accesses_total{0}; // total bruto de acessos
     std::atomic<uint64_t> extra_cycles{0};       // reservado para extensões
+    std::atomic<uint64_t> cache_mem_accesses{0}; // total de acessos à memória cache
 
     // Instrumentação detalhada
     std::atomic<uint64_t> pipeline_cycles{0};
