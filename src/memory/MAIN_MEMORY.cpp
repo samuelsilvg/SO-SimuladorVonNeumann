@@ -18,14 +18,14 @@ MAIN_MEMORY::~MAIN_MEMORY()
 bool MAIN_MEMORY::isEmpty()
 {
     for (auto &val : ram)
-        if (val != 0) return false;
+        if (val != MEMORY_ACCESS_ERROR) return false;
     return true;
 }
 
 bool MAIN_MEMORY::notFull()
 {
     for (auto &val : ram)
-        if (val == 0) return true;
+        if (val == MEMORY_ACCESS_ERROR) return true;
     return false;
 }
 

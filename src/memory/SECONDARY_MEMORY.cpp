@@ -20,7 +20,7 @@ bool SECONDARY_MEMORY::isEmpty()
 {
     for (auto &row : storage)
         for (auto &val : row)
-            if (val != 0) return false;
+            if (val != MEMORY_ACCESS_ERROR) return false;
     return true;
 }
 
@@ -28,7 +28,7 @@ bool SECONDARY_MEMORY::notFull()
 {
     for (auto &row : storage)
         for (auto &val : row)
-            if (val == 0) return true;
+            if (val == MEMORY_ACCESS_ERROR) return true;
     return false;
 }
 
