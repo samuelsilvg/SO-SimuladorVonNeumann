@@ -26,6 +26,7 @@ public:
     void put(size_t address, size_t data, int currentTimestamp);
     void update(size_t address, size_t data);
     void invalidate();
+    std::vector<std::pair<size_t, size_t>> dirtyData();
 };
 
 #endif

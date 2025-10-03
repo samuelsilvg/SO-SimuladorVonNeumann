@@ -65,3 +65,12 @@ void Cache::invalidate(){
         c.second.isValid = 0;
     }
 }
+
+std::vector<std::pair<size_t, size_t>> Cache::dirtyData(){
+    std::vector<std::pair<size_t, size_t>> dirtyData;
+    
+    for(const auto &c : cacheMap){
+        if(c.second.isDirty)
+            dirtyData.emplace_back(std::make_pair(c.first, c.second.data));
+    }
+}
