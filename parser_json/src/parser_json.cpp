@@ -6,6 +6,8 @@
 #include <cctype>
 #include <vector>
 #include <stdexcept>
+#include <iostream>
+#include <iomanip>
 
 using namespace std;
 using nlohmann::json;
@@ -235,12 +237,13 @@ int parseData(const json &dataJson, MainMemory &ram, int startAddr){
                 for (auto &e : val){
                     int w = e.is_string()? static_cast<int>(std::stoul(e.get<string>(),nullptr,0))
                                           : e.get<int>();
-                    ram.WriteMem(addr, w); addr += 4;
+                    std::cout << "[DEBUG DATA] Escrevendo valor " << w << " no endereço " << addr << std::endl;
+                    ram.WriteMem(addr, w); addr += 1;
                 }
             } else {
                 int w = val.is_string()? static_cast<int>(std::stoul(val.get<string>(),nullptr,0))
                                         : val.get<int>();
-                ram.WriteMem(addr, w); addr += 4;
+                ram.WriteMem(addr, w); addr += 1;
             }
         }
         return addr;
@@ -253,7 +256,7 @@ int parseData(const json &dataJson, MainMemory &ram, int startAddr){
             for (size_t i=0;i<bytes.size(); i+=4){
                 uint32_t w=0;
                 for (size_t j=0;j<4 && i+j<bytes.size(); ++j) w = (w<<8) | bytes[i+j];
-                ram.WriteMem(addr, static_cast<int>(w)); addr += 4;
+                ram.WriteMem(addr, w); addr += 1;
             }
             bytes.clear();
         };
@@ -268,12 +271,13 @@ int parseData(const json &dataJson, MainMemory &ram, int startAddr){
                     for (auto &v : item["value"]){
                         int w = v.is_string()? static_cast<int>(std::stoul(v.get<string>(),nullptr,0))
                                              : v.get<int>();
-                        ram.WriteMem(addr, w); addr += 4;
+                        ram.WriteMem(addr, w); addr += 1;
                     }
                 } else {
                     int w = item["value"].is_string()? static_cast<int>(std::stoul(item["value"].get<string>(),nullptr,0))
                                                       : item["value"].get<int>();
-                    ram.WriteMem(addr, w); addr += 4;
+                    std::cout << "[DEBUG DATA] Escrevendo valor " << w << " no endereço " << addr << std::endl;
+                    ram.WriteMem(addr, w); addr += 1;
                 }
             } else if (type=="byte"){
                 if (item["value"].is_array()){
@@ -332,10 +336,10 @@ int parseProgram(const json &programJson, MainMemory &ram, int startAddr) {
         uint32_t binary_instruction = parseInstruction(node, current_instruction_addr);
         
         // Escreve a instrução na memória
-        ram.WriteMem(current_mem_addr, static_cast<int>(binary_instruction));
+        ram.WriteMem(current_mem_addr, binary_instruction);
         
         // Avança para o próximo endereço de memória (palavra de 4 bytes)
-        current_mem_addr += 4;
+        current_mem_addr += 1;
         current_instruction_addr++;
     }
 

@@ -1,4 +1,4 @@
-# Install script for directory: /home/eduardo/Downloads/Trabalho SO 1/Trabalho SO 1/Parser-Json---MIPS
+# Install script for directory: /workspaces/SO-SimuladorVonNeumann/parser_json
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/eduardo/Downloads/Trabalho SO 1/Trabalho SO 1/Parser-Json---MIPS/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/workspaces/SO-SimuladorVonNeumann/parser_json/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

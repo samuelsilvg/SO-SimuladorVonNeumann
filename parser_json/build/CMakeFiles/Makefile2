@@ -54,10 +54,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = "/home/eduardo/Downloads/Trabalho SO 1/Trabalho SO 1/Parser-Json---MIPS"
+CMAKE_SOURCE_DIR = /workspaces/SO-SimuladorVonNeumann/parser_json
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = "/home/eduardo/Downloads/Trabalho SO 1/Trabalho SO 1/Parser-Json---MIPS/build"
+CMAKE_BINARY_DIR = /workspaces/SO-SimuladorVonNeumann/parser_json/build
 
 #=============================================================================
 # Directory level rules for the build root directory
@@ -81,14 +81,14 @@ clean: CMakeFiles/trabalho1.dir/clean
 CMakeFiles/trabalho1.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/trabalho1.dir/build.make CMakeFiles/trabalho1.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/trabalho1.dir/build.make CMakeFiles/trabalho1.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir="/home/eduardo/Downloads/Trabalho SO 1/Trabalho SO 1/Parser-Json---MIPS/build/CMakeFiles" --progress-num=1,2,3,4 "Built target trabalho1"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/workspaces/SO-SimuladorVonNeumann/parser_json/build/CMakeFiles --progress-num=1,2,3,4 "Built target trabalho1"
 .PHONY : CMakeFiles/trabalho1.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/trabalho1.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start "/home/eduardo/Downloads/Trabalho SO 1/Trabalho SO 1/Parser-Json---MIPS/build/CMakeFiles" 4
+	$(CMAKE_COMMAND) -E cmake_progress_start /workspaces/SO-SimuladorVonNeumann/parser_json/build/CMakeFiles 4
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/trabalho1.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start "/home/eduardo/Downloads/Trabalho SO 1/Trabalho SO 1/Parser-Json---MIPS/build/CMakeFiles" 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /workspaces/SO-SimuladorVonNeumann/parser_json/build/CMakeFiles 0
 .PHONY : CMakeFiles/trabalho1.dir/rule
 
 # Convenience name for target.
@@ -107,7 +107,7 @@ CMakeFiles/trabalho1.dir/clean:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	$(CMAKE_COMMAND) -P "/home/eduardo/Downloads/Trabalho SO 1/Trabalho SO 1/Parser-Json---MIPS/build/CMakeFiles/VerifyGlobs.cmake"
+	$(CMAKE_COMMAND) -P /workspaces/SO-SimuladorVonNeumann/parser_json/build/CMakeFiles/VerifyGlobs.cmake
 	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

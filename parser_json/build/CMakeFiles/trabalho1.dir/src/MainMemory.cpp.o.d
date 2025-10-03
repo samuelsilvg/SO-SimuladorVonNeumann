@@ -1,7 +1,7 @@
 CMakeFiles/trabalho1.dir/src/MainMemory.cpp.o: \
- /home/eduardo/Downloads/Trabalho\ SO\ 1/Trabalho\ SO\ 1/Parser-Json---MIPS/src/MainMemory.cpp \
+ /workspaces/SO-SimuladorVonNeumann/parser_json/src/MainMemory.cpp \
  /usr/include/stdc-predef.h \
- /home/eduardo/Downloads/Trabalho\ SO\ 1/Trabalho\ SO\ 1/Parser-Json---MIPS/src/MainMemory.hpp \
+ /workspaces/SO-SimuladorVonNeumann/parser_json/src/MainMemory.hpp \
  /usr/include/c++/11/unordered_map /usr/include/c++/11/type_traits \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \

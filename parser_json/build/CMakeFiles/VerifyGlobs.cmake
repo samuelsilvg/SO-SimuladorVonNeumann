@@ -3,13 +3,13 @@
 cmake_policy(SET CMP0009 NEW)
 
 # SRC_FILES at CMakeLists.txt:15 (file)
-file(GLOB NEW_GLOB LIST_DIRECTORIES true "/home/eduardo/Downloads/Trabalho SO 1/Trabalho SO 1/Parser-Json---MIPS/src/*.cpp")
+file(GLOB NEW_GLOB LIST_DIRECTORIES true "/workspaces/SO-SimuladorVonNeumann/parser_json/src/*.cpp")
 set(OLD_GLOB
-  "/home/eduardo/Downloads/Trabalho SO 1/Trabalho SO 1/Parser-Json---MIPS/src/MainMemory.cpp"
-  "/home/eduardo/Downloads/Trabalho SO 1/Trabalho SO 1/Parser-Json---MIPS/src/main.cpp"
-  "/home/eduardo/Downloads/Trabalho SO 1/Trabalho SO 1/Parser-Json---MIPS/src/parser_json.cpp"
+  "/workspaces/SO-SimuladorVonNeumann/parser_json/src/MainMemory.cpp"
+  "/workspaces/SO-SimuladorVonNeumann/parser_json/src/main.cpp"
+  "/workspaces/SO-SimuladorVonNeumann/parser_json/src/parser_json.cpp"
   )
 if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
   message("-- GLOB mismatch!")
-  file(TOUCH_NOCREATE "/home/eduardo/Downloads/Trabalho SO 1/Trabalho SO 1/Parser-Json---MIPS/build/CMakeFiles/cmake.verify_globs")
+  file(TOUCH_NOCREATE "/workspaces/SO-SimuladorVonNeumann/parser_json/build/CMakeFiles/cmake.verify_globs")
 endif()

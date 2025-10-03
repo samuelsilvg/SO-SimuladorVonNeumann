@@ -22,8 +22,8 @@ find_package(nlohmann_json QUIET)
 if (nlohmann_json_FOUND)
   target_link_libraries(trabalho1 PRIVATE nlohmann_json::nlohmann_json)
 else()
-  message(STATUS "nlohmann_json não encontrado — usando include manual (external/)")
-  target_include_directories(trabalho1 PRIVATE external)
+  message(STATUS "nlohmann_json não encontrado — usando include manual (include/)")
+  target_include_directories(trabalho1 PRIVATE include)
 endif()
 
 # Copiar tasks/ para a pasta do binário após o build
