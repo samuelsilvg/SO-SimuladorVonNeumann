@@ -132,6 +132,47 @@ void REGISTER_BANK::print_registers() const{
     printPair("k0", k0.read());   printPair("k1", k1.read());
     cout << "========================================\n";
 }
+string REGISTER_BANK::get_registers_as_string() const {
+    std::ostringstream ss;
+    auto printPair = [&ss](const std::string &name, uint32_t value){
+        ss << std::left << std::setw(6) << name << ": 0x"
+           << std::hex << std::setw(8) << std::setfill('0') << value
+           << std::dec << std::setfill(' ') << "  (Decimal: "
+           << static_cast<int32_t>(value) << ")\n";
+    };
+
+    ss << "========================================\n";
+    ss << "====== Estado do Banco de Registradores ======\n";
+    ss << "========================================\n";
+    printPair("pc", pc.read()); printPair("ir", ir.read());
+    printPair("mar", mar.read()); printPair("sr", sr.read());
+    printPair("hi", hi.read()); printPair("lo", lo.read());
+    ss << "----------------------------------------\n";
+    printPair("zero", zero.read()); printPair("at", at.read());
+    printPair("v0", v0.read());   printPair("v1", v1.read());
+    printPair("a0", a0.read());   printPair("a1", a1.read());
+    printPair("a2", a2.read());   printPair("a3", a3.read());
+    ss << "----------------------------------------\n";
+    printPair("t0", t0.read());   printPair("t1", t1.read());
+    printPair("t2", t2.read());   printPair("t3", t3.read());
+    printPair("t4", t4.read());   printPair("t5", t5.read());
+    printPair("t6", t6.read());   printPair("t7", t7.read());
+    printPair("t8", t8.read());   printPair("t9", t9.read());
+    ss << "----------------------------------------\n";
+    printPair("s0", s0.read());   printPair("s1", s1.read());
+    printPair("s2", s2.read());   printPair("s3", s3.read());
+    printPair("s4", s4.read());   printPair("s5", s5.read());
+    printPair("s6", s6.read());   printPair("s7", s7.read());
+    ss << "----------------------------------------\n";
+    printPair("gp", gp.read());   printPair("sp", sp.read());
+    printPair("fp", fp.read());   printPair("ra", ra.read());
+    printPair("k0", k0.read());   printPair("k1", k1.read());
+    ss << "========================================\n";
+
+    return ss.str();
+}
+
+
 
 } 
 

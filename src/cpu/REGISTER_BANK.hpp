@@ -70,6 +70,8 @@ namespace hw{
 
         // Imprime o estado de todos os registradores na tela.
         void print_registers() const;
+        string get_registers_as_string() const;
+
     };
 
 } 

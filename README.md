@@ -233,6 +233,32 @@ Tem-se na classe de `RegisterMapper`, mapas bidirecionais para uma performance o
 - `reset()`: Zera todos os registradores. Serve para limpar o estado da CPU entre processos.
 - `print_registers()`: Função de ajuda para debug. Imprime o valor de todos os registradores de forma organizada na tela.
 
+## PCB.hpp (Formato e Métricas)
+
+**Campos principais (resumo)**:
+- `pid` (int): identificador único do processo.
+- `state` (enum): {NEW, READY, RUNNING, BLOCKED, TERMINATED}.
+- `priority` (int): prioridade do processo (maior valor = maior prioridade).
+- `quantum` (int): fatia de tempo (em ciclos) para escalonador round-robin.
+- `cache_hits` / `cache_misses` (uint64): contadores de cache por processo.
+- `memory_cycles` (uint64): contagem de ciclos atribuídos a acessos à memória para este processo.
+- `io_cycles` (uint64): contagem de ciclos gastos em I/O.
+
+**MemWeights**
+- Conjunto de pesos (`memWeights.cache`, `memWeights.main`, `memWeights.secondary`) usado para calcular custo em ciclos quando o processo acessa cada camada de memória.
+
+**JSON de entrada (pcb_loader)**
+- O `pcb_loader` aceita um JSON com chaves obrigatórias: `pid`, `priority`, `quantum`, `initial_pc` e opcional `memWeights`. Exemplo:
+```json
+{
+  "pid": 1,
+  "priority": 5,
+  "quantum": 5,
+  "initial_pc": 0,
+  "memWeights": { "cache": 1, "main": 10, "secondary": 100 }
+}
+```
+
 ## `CONTROL_UNIT.hpp/.cpp`:
 
 <div align="justify">
@@ -328,6 +354,12 @@ Esses métodos garantem que cada posição linear seja mapeada corretamente dent
 ### Comportamento de erro e marcação de células
 - Em operações inválidas (endereço fora do limite) as funções retornam `MEMORY_ACCESS_ERROR`.  
 - Em deleções bem-sucedidas, a célula é marcada com `MEMORY_ACCESS_ERROR`.
+do)
+
+
+
+
+
 
 ## Cache (Memória Cache)
 
@@ -345,6 +377,12 @@ O bit `isValid` garante que uma linha possui dados utilizáveis, enquanto o `isD
 - **isDirty** — Indica se o dado foi alterado na cache e ainda não foi gravado na memória principal.  
 
 ---
+
+**Endereçamento e granularidade**
+- `address` nas funções públicas da cache representa um *índice de palavra* (word address). Cada palavra tem 4 bytes. Se chamar `Cache::get(0)` retorna o conteúdo da primeira palavra. (Se o teu código usa bytes, converte `byte_offset/4` antes de usar a cache.)
+
+**Métricas**
+- `get_hits()` e `get_misses()` retornam os contadores agregados desde a inicialização. Reset manual pode ser feito re-criando o objeto `Cache` ou adicionando um método `resetMetrics()`.
 
 ### Comportamento principal (funções)
 
@@ -378,6 +416,17 @@ A implementação atual usa **FIFO (First In, First Out)**: **o primeiro bloco i
   - Se `fifo_queue` estiver vazia, retorna `-1`.  
   - Caso contrário, retorna e remove o **primeiro endereço inserido** na fila (seguindo a política FIFO).  
 
+
+**Política de escrita**
+- A cache implementa **write-back** com **no-write-allocate**:
+  - `Cache::update(address, data)` marca a linha como *suja* (`isDirty = true`) se a entrada existir.
+  - Se a entrada não existir, **não** aloca (não faz write-allocate). Em seguida deve ocorrer write direto à memória via `MemoryManager` (comportamento atual do sistema).
+
+**Substituição**
+- Política: **FIFO** (primeiro a entrar, primeiro a sair).  
+- Ao substituir, se a linha removida estiver `isDirty=true`, a cache chama `MemoryManager::writeToFile` para write-back.
+
+
 ---
 
 ### Estrutura interna
@@ -392,7 +441,9 @@ Isso melhora a performance global do sistema de memória, pois garante que as op
 * `IOManager.h`: Arquivo de cabeçalho da classe `IOManager`. Define a interface pública e os membros privados.
 * `IOManager.cpp`: Arquivo de implementação da classe `IOManager`. Contém toda a lógica de funcionamento do gerenciador.
 * `shared_structs.h`: Define estruturas de dados e enums (`PCB`, `IORequest`, `State`) que são compartilhados entre o `IOManager` e outros módulos.
-* `main.cpp`: **Arquivo de simulação e exemplo de uso.** Ele cria um ambiente com processos e um escalonador para demonstrar a interação com o `IOManager`.
+* `main.cpp`: **Arquivo de simulação e exemplo de uso.** Ele cria um ambiente com processos e um escalonador para demonstrar a interação com o `IOManager`. main inicializa a configuração via CLI, carrega processos do ficheiro JSON, cria PCBs e inicializa os subsistemas (Cache, MemoryManager, Control Unit, Scheduler). Em seguida entra no loop de simulação: o scheduler seleciona processos, faz context switch, e a unidade de controle executa instruções ciclo-a-ciclo (fetch → decode → execute → memory → write-back), contabilizando métricas (ciclos, cache hits/misses). Ao término, main faz flush das linhas sujas da cache, escreve estatísticas e finaliza. Flags como --time-slice, --cache-capacity, --max-cycles controlam comportamento de runtime.
+
+
 
 ### Arquitetura do Projeto
 

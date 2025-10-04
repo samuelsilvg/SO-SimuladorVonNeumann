@@ -1,75 +1,64 @@
 #include "SECONDARY_MEMORY.hpp"
 
-SECONDARY_MEMORY::SECONDARY_MEMORY(size_t size)
-{
-    if (size > MAX_SECONDARY_MEMORY_SIZE)
+SECONDARY_MEMORY::SECONDARY_MEMORY(size_t size) {
+    if (size > MAX_SECONDARY_MEMORY_SIZE) {
         this->size = MAX_SECONDARY_MEMORY_SIZE;
-    else
+    } else {
         this->size = size;
-
-    this->rowSize = static_cast<size_t>(std::sqrt(MAX_SECONDARY_MEMORY_SIZE));
-    this->storage.resize(rowSize, vector<uint32_t>(rowSize, MEMORY_ACCESS_ERROR));
+    }
+    this->storage.resize(this->size, MEMORY_ACCESS_ERROR);
 }
 
-SECONDARY_MEMORY::~SECONDARY_MEMORY()
-{
+SECONDARY_MEMORY::~SECONDARY_MEMORY() {
     this->storage.clear();
 }
 
-bool SECONDARY_MEMORY::isEmpty()
-{
-    for (auto &row : storage)
-        for (auto &val : row)
-            if (val != MEMORY_ACCESS_ERROR) return false;
-    return true;
-}
-
-bool SECONDARY_MEMORY::notFull()
-{
-    for (auto &row : storage)
-        for (auto &val : row)
-            if (val == MEMORY_ACCESS_ERROR) return true;
-    return false;
-}
-
-inline size_t SECONDARY_MEMORY::getRow(uint32_t address) const
-{
-    return address / rowSize;
-}
-
-inline size_t SECONDARY_MEMORY::getCol(uint32_t address) const
-{
-    return address % rowSize;
-}
-
-uint32_t SECONDARY_MEMORY::ReadMem(uint32_t address)
-{
-    if (address < this->size)
-        return storage[getRow(address)][getCol(address)];
-    return MEMORY_ACCESS_ERROR;
-}
-
-uint32_t SECONDARY_MEMORY::WriteMem(uint32_t address, uint32_t data)
-{
-    if (address < this->size)
-    {
-        storage[getRow(address)][getCol(address)] = data;
-        return data;
-    }
-    return MEMORY_ACCESS_ERROR;
-}
-
-uint32_t SECONDARY_MEMORY::DeleteData(uint32_t address)
-{
-    if (address < this->size)
-    {
-        size_t r = getRow(address), c = getCol(address);
-        if (storage[r][c] != MEMORY_ACCESS_ERROR)
-        {
-            uint32_t deletedData = storage[r][c];
-            storage[r][c] = MEMORY_ACCESS_ERROR;
-            return deletedData;
+// Simulação de acesso lento
+uint32_t SECONDARY_MEMORY::ReadMem(uint32_t address) {
+    if (address < this->size) {
+        // Varredura simulada: percorre o vetor para encontrar o endereço
+        for (uint32_t i = 0; i < this->size; ++i) {
+            if (i == address) {
+                return storage[i];
+            }
         }
     }
     return MEMORY_ACCESS_ERROR;
+}
+
+// Simulação de acesso lento
+uint32_t SECONDARY_MEMORY::WriteMem(uint32_t address, uint32_t data) {
+    if (address < this->size) {
+        // Varredura simulada: percorre o vetor para encontrar o endereço
+        for (uint32_t i = 0; i < this->size; ++i) {
+            if (i == address) {
+                storage[i] = data;
+                return data;
+            }
+        }
+    }
+    return MEMORY_ACCESS_ERROR;
+}
+
+uint32_t SECONDARY_MEMORY::DeleteData(uint32_t address) {
+    if (address < this->size) {
+        uint32_t deletedData = storage[address];
+        storage[address] = MEMORY_ACCESS_ERROR;
+        return deletedData;
+    }
+    return MEMORY_ACCESS_ERROR;
+}
+
+bool SECONDARY_MEMORY::isEmpty() {
+    for (const auto &val : storage) {
+        if (val != MEMORY_ACCESS_ERROR) return false;
+    }
+    return true;
+}
+
+bool SECONDARY_MEMORY::notFull() {
+    for (const auto &val : storage) {
+        if (val == MEMORY_ACCESS_ERROR) return true;
+    }
+    return false;
 }
