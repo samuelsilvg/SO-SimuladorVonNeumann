@@ -10,19 +10,26 @@ de Von Neumann e Pipeline MIPS
 
 
 <div align="justify">
-  <p>Esse é um repositório voltado para a simulação computacional de uma arquitetura de Von Neumann que utiliza o pipeline MIPS, proposta como trabalho de aquecimento da disciplina de Sistemas Opercionais do CEFET-MG Campus V pelo professor Michel Pires da Silva em 2025.</p>
+  <p>Esse é um repositório voltado para a simulação computacional de uma arquitetura de Von Neumann que utiliza o pipeline MIPS, proposta como trabalho de aquecimento da disciplina de Sistemas Operacionais do CEFET-MG Campus V pelo professor Michel Pires da Silva em 2025.</p>
 </div>
+
+![C++](https://img.shields.io/badge/C%2B%2B-17-blue)
+![Docker](https://img.shields.io/badge/Docker-ready-informational)
+![DevContainers](https://img.shields.io/badge/VSCode-Dev%20Containers-23a)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 
 ## 📖: Índice
 
 - [Visão Geral](#visão-geral)
-- [Organização do Repositório](#organização-do-repositorio)
+- [Organização do Repositório](#organização-do-repositório)
     - [Arquivos da CPU](#arquivos-da-cpu)
     - [Arquivos das Memórias](#arquivos-das-memórias)
     - [Arquivos dos Periféricos e Dispositivos I/O](#arquivos-dos-periféricos)
 - [Sobre a CPU](#sobre-a-cpu)
 - [Sobre as Memórias](#sobre-as-memórias)
-- [Sobre os Periféricos e I/O](#sobre-os-periféricos-e-i/o)
+- [Sobre o Cache (Memória cache)](#cache-memória-cache)
+- [Sobre os Periféricos e I/O](#sobre-os-periféricos-e-io)
 - [Configuração do WSL e Docker](#configuração-do-wsl-e-docker)
 - [Colaboradores](#colaboradores)
 
@@ -86,12 +93,23 @@ Com base nos arquivos gerados, podemos definir propriamente em qual parte da arq
 ### Arquivos das Memórias
 #### Memórias principal e secundária:
 - `MAIN_MEMORY.hpp`
+- `MAIN_MEMOTY.cpp`
 - `SECONDARY_MEMORY.hpp`
+- `SECONDARY_MEMORY.cpp`
+
+
+
+### Arquivos Cache (Memória Cache)
+- `cache.hpp`
+- `cache.cpp`
+- `cachePolicy.hpp`
+- `cachePolicy.cpp`
 
 
 
 ### Arquivos dos Periféricos
-...
+- `IOManager.hpp`
+- `IOManager.cpp`
 
 
 
@@ -117,10 +135,10 @@ Com base nos arquivos gerados, podemos definir propriamente em qual parte da arq
 * **Descrição:** Multiplica dois operandos e armazena o resultado. (com detecção de overflow signed)
 #### DIV
 * **Tipo:** Aritmética
-* **Descrição:** Dividi o primeiro operando em relação ao segundo e armazena o resultado. (com detecção de overflow signed, trata divisão por zero).
+* **Descrição:** Divide o primeiro operando em relação ao segundo e armazena o resultado. (com detecção de overflow signed, trata divisão por zero).
 #### AND_OP
 * **Tipo:** Lógica
-* **Descrição:** Compara os dois operandos como uma porta lógica "AND" e armazena o resultado. (tratando ambos como usigned)
+* **Descrição:** Compara os dois operandos como uma porta lógica "AND" e armazena o resultado. (tratando ambos como unsigned)
 #### BEQ (Branch if Equal)
 * **Tipo:** Lógica
 * **Descrição:** Compara os dois operandos, resulta 1 se forem iguais e 0 caso contrário. 
@@ -311,6 +329,61 @@ Esses métodos garantem que cada posição linear seja mapeada corretamente dent
 - Em operações inválidas (endereço fora do limite) as funções retornam `MEMORY_ACCESS_ERROR`.  
 - Em deleções bem-sucedidas, a célula é marcada com `MEMORY_ACCESS_ERROR`.
 
+## Cache (Memória Cache)
+
+Seu objetivo é reduzir o tempo médio de acesso à memória principal (RAM), diminuindo a latência do processador. A cache funciona como um intermediário inteligente entre a CPU e a memória principal, utilizando bits de controle como `isValid` e `isDirty` para gerenciar a coerência e consistência dos dados.  
+O bit `isValid` garante que uma linha possui dados utilizáveis, enquanto o `isDirty` indica modificações ainda não propagadas à RAM (write-back pendente).
+
+### Estrutura da Cache
+
+| Data | isValid | isDirty |
+|------|---------|---------|
+| Valor armazenado | Válido? | Sujo? |
+
+- **Data** — Valor efetivo armazenado (dado real).  
+- **isValid** — Indica se a entrada contém um dado válido.  
+- **isDirty** — Indica se o dado foi alterado na cache e ainda não foi gravado na memória principal.  
+
+---
+
+### Comportamento principal (funções)
+
+- **Construtor** — [`Cache::Cache`](src/memory/cache.cpp#L5) inicializa a estrutura com a capacidade máxima e zera métricas (`cache_hits`, `cache_misses`).  
+
+- [`Cache::get(size_t address)`](src/memory/cache.cpp#L16) busca o dado pelo `address`/`tag`.  
+  - Se encontrar com `isValid = true` → **cache hit** (retorna o valor e incrementa `cache_hits`).  
+  - Caso contrário → **cache miss** (retorna `CACHE_MISS` e incrementa `cache_misses`).  
+
+- [`Cache::put(size_t address, size_t data, MemoryManager* memManager)`](src/memory/cache.cpp#L26) insere/substitui bloco.  
+  - Se a cache estiver cheia, aplica **FIFO (First In, First Out)**.  
+  - Se o bloco removido estiver **sujo** (`isDirty = true`), faz **write-back** via `MemoryManager`.  
+  - Insere `{ data, isValid = true, isDirty = false }` e atualiza a fila FIFO.  
+
+- [`Cache::update(size_t address, size_t data)`](src/memory/cache.cpp#L58) atualiza uma linha existente.  
+  - Marca como **suja** (`isDirty = true`) e mantém `isValid = true`.  
+  - Se o endereço não existir, **não** faz write-allocate.  
+
+- [`Cache::invalidate()`](src/memory/cache.cpp#L73) define `isValid = false` em todas as entradas e esvazia a fila FIFO (reset/troca de contexto).  
+
+- [`Cache::dirtyData()`](src/memory/cache.cpp#L82) retorna `{address, data}` de todas as linhas **sujas**, útil para **flush** consistente para a memória principal.  
+
+---
+
+### Política de substituição
+
+A [`CachePolicy`](src/memory/cachePolicy.cpp) define a estratégia quando a cache atinge a capacidade.  
+A implementação atual usa **FIFO (First In, First Out)**: **o primeiro bloco inserido é o primeiro a ser removido** (sem considerar acessos recentes).
+
+- [`CachePolicy::getAddressToReplace(std::queue<size_t>& fifo_queue)`](src/memory/cachePolicy.cpp#L8) indica **qual endereço remover**.  
+  - Se `fifo_queue` estiver vazia, retorna `-1`.  
+  - Caso contrário, retorna e remove o **primeiro endereço inserido** na fila (seguindo a política FIFO).  
+
+---
+
+### Estrutura interna
+
+A cache usa **`std::unordered_map`** para mapeamento `{address → CacheEntry}`, permitindo **acessos diretos e eficientes (O(1))** aos endereços armazenados.  
+Isso melhora a performance global do sistema de memória, pois garante que as operações de leitura, escrita e verificação de presença na cache sejam rápidas, otimizando o desempenho.
 
 
 ## Sobre os Periféricos e I/O
@@ -560,3 +633,5 @@ Certifique-se de fornecer exemplos de comandos ou scripts necessários para exec
 - Rafael Adolfo Silva Ferreira (radsfer](https://github.com/radsfer))
 - Matheus Emanuel da Silva ([matheus-emanue123](https://github.com/matheus-emanue123))
 - Deivy Rossi Teixeira de Melo ([deivyrossi](https://github.com/deivyrossi))
+
+
