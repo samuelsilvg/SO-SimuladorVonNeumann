@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/trabalho1.dir/src/MainMemory.cpp.o CMakeFiles/trabalho1.dir/src/main.cpp.o CMakeFiles/trabalho1.dir/src/parser_json.cpp.o -o trabalho1 

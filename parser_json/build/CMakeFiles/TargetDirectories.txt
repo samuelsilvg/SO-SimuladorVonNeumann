@@ -1,3 +1,0 @@
-/workspaces/SO-SimuladorVonNeumann/parser_json/build/CMakeFiles/trabalho1.dir
-/workspaces/SO-SimuladorVonNeumann/parser_json/build/CMakeFiles/edit_cache.dir
-/workspaces/SO-SimuladorVonNeumann/parser_json/build/CMakeFiles/rebuild_cache.dir
