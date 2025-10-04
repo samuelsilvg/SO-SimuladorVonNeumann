@@ -38,15 +38,8 @@ O `main.cpp` foi criado para atuar como o núcleo do sistema operacional, orques
 
 - **Integração do `parser_json`:** O parser de programas foi modificado para interagir com o `MemoryManager` em vez de escrever diretamente na `MAIN_MEMORY`. Isso garante que o carregamento do programa na inicialização respeite toda a hierarquia de memória, incluindo a cache.
 
-## 4. Configuração do Ambiente de Desenvolvimento (Dev Container)
 
-Foram solucionados diversos problemas de permissão para garantir que o projeto rodasse de forma estável no Fedora com Dev Containers.
-
-- **SELinux:** O problema de `Permission denied`, mesmo com `sudo`, foi identificado como uma restrição do SELinux.
-- **Solução:** O arquivo `devcontainer.json` foi configurado para usar a propriedade `runArgs` com a flag `--volume ... :z`, que instrui o Docker/Podman a aplicar o rótulo de segurança correto à pasta do projeto, permitindo que o contêiner a acesse sem restrições.
-- **Limpeza do Ambiente:** Foi introduzido o uso dos comandos `docker/podman system prune` como boa prática para resolver conflitos com imagens e caches antigos.
-
-## 5. Correções Gerais de Compilação
+## 4. Correções Gerais de Compilação
 
 - Resolvido o erro de cópia do `PCB` (que continha membros `std::atomic` não-copiáveis) ao passar a gerenciar os processos através de ponteiros (`std::unique_ptr<PCB>`).
 - Corrigido o erro de "tipo incompleto" do `IORequest` ao mover sua definição para um header acessível (`IOManager.hpp`).
