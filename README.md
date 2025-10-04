@@ -10,19 +10,25 @@ de Von Neumann e Pipeline MIPS
 
 
 <div align="justify">
-  <p>Esse é um repositório voltado para a simulação computacional de uma arquitetura de Von Neumann que utiliza o pipeline MIPS, proposta como trabalho de aquecimento da disciplina de Sistemas Opercionais do CEFET-MG Campus V pelo professor Michel Pires da Silva em 2025.</p>
+  <p>Esse é um repositório voltado para a simulação computacional de uma arquitetura de Von Neumann que utiliza o pipeline MIPS, proposta como trabalho de aquecimento da disciplina de Sistemas Operacionais do CEFET-MG Campus V pelo professor Michel Pires da Silva em 2025.</p>
 </div>
+
+![C++](https://img.shields.io/badge/C%2B%2B-17-blue)
+![Docker](https://img.shields.io/badge/Docker-ready-informational)
+![DevContainers](https://img.shields.io/badge/VSCode-Dev%20Containers-23a)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 
 ## 📖: Índice
 
 - [Visão Geral](#visão-geral)
-- [Organização do Repositório](#organização-do-repositorio)
+- [Organização do Repositório](#organização-do-repositório)
     - [Arquivos da CPU](#arquivos-da-cpu)
     - [Arquivos das Memórias](#arquivos-das-memórias)
     - [Arquivos dos Periféricos e Dispositivos I/O](#arquivos-dos-periféricos)
 - [Sobre a CPU](#sobre-a-cpu)
 - [Sobre as Memórias](#sobre-as-memórias)
-- [Sobre os Periféricos e I/O](#sobre-os-periféricos-e-i/o)
+- [Sobre os Periféricos e I/O](#sobre-os-periféricos-e-io)
 - [Configuração do WSL e Docker](#configuração-do-wsl-e-docker)
 - [Colaboradores](#colaboradores)
 
@@ -86,12 +92,15 @@ Com base nos arquivos gerados, podemos definir propriamente em qual parte da arq
 ### Arquivos das Memórias
 #### Memórias principal e secundária:
 - `MAIN_MEMORY.hpp`
+- `MAIN_MEMOTY.cpp`
 - `SECONDARY_MEMORY.hpp`
+- `SECONDARY_MEMORY.cpp`
 
 
 
 ### Arquivos dos Periféricos
-...
+- `IOManager.hpp`
+- `IOManager.cpp`
 
 
 
@@ -117,10 +126,10 @@ Com base nos arquivos gerados, podemos definir propriamente em qual parte da arq
 * **Descrição:** Multiplica dois operandos e armazena o resultado. (com detecção de overflow signed)
 #### DIV
 * **Tipo:** Aritmética
-* **Descrição:** Dividi o primeiro operando em relação ao segundo e armazena o resultado. (com detecção de overflow signed, trata divisão por zero).
+* **Descrição:** Divide o primeiro operando em relação ao segundo e armazena o resultado. (com detecção de overflow signed, trata divisão por zero).
 #### AND_OP
 * **Tipo:** Lógica
-* **Descrição:** Compara os dois operandos como uma porta lógica "AND" e armazena o resultado. (tratando ambos como usigned)
+* **Descrição:** Compara os dois operandos como uma porta lógica "AND" e armazena o resultado. (tratando ambos como unsigned)
 #### BEQ (Branch if Equal)
 * **Tipo:** Lógica
 * **Descrição:** Compara os dois operandos, resulta 1 se forem iguais e 0 caso contrário. 
@@ -559,4 +568,5 @@ Certifique-se de fornecer exemplos de comandos ou scripts necessários para exec
 - Lívia Gonçalves ([livia-goncalves-01](https://github.com/livia-goncalves-01))
 - Rafael Adolfo Silva Ferreira (radsfer](https://github.com/radsfer))
 - Matheus Emanuel da Silva ([matheus-emanue123](https://github.com/matheus-emanue123))
+
 - Deivy Rossi Teixeira de Melo ([deivyrossi](https://github.com/deivyrossi))
