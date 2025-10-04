@@ -31,6 +31,7 @@ de Von Neumann e Pipeline MIPS
 - [Sobre o Cache (Memória cache)](#cache-memória-cache)
 - [Sobre os Periféricos e I/O](#sobre-os-periféricos-e-io)
 - [Configuração do WSL e Docker](#configuração-do-wsl-e-docker)
+- [Como Rodar](#como-rodar)
 - [Colaboradores](#colaboradores)
 
 
@@ -64,10 +65,6 @@ conceitual dos sistemas computacionais modernos. Essa arquitetura caracteriza-se
 
 
 ## Organização do Repositório
-Com base na definição da arquitetura, na divisão de tarefas entre toda a sala e na integração de todos os componentes, o repositório ficou organizado da seguinte forma:
-
-...
-
 Com base nos arquivos gerados, podemos definir propriamente em qual parte da arquitetura cada um deles pertence, como ficou definido no resumo a seguir:
 
 ### Arquivos da CPU
@@ -93,7 +90,7 @@ Com base nos arquivos gerados, podemos definir propriamente em qual parte da arq
 ### Arquivos das Memórias
 #### Memórias principal e secundária:
 - `MAIN_MEMORY.hpp`
-- `MAIN_MEMOTY.cpp`
+- `MAIN_MEMORY.cpp`
 - `SECONDARY_MEMORY.hpp`
 - `SECONDARY_MEMORY.cpp`
 
@@ -219,7 +216,7 @@ Tem-se na classe de `RegisterMapper`, mapas bidirecionais para uma performance o
 <div align="justify">
 <p>O banco de registradores é, na teoria, **a memória mais rápida da CPU**. Ele funciona como uma "mesa de trabalho" para o processador, guardando os dados que estão sendo usados no momento, como o resultado de uma soma ou o endereço da próxima instrução.</p>
 
-<p>Na prática, aqui no nosso código, o REGISTER_BANK é uma **classe que agrupa todos os registradores do MIPS como objetos individuais**. A ideia é que, em vez de acessar um registrador por um número (como o registrador 16), a Control Unit pode simplesmente pedir pelo nome ("s0"), usando os mapas que a gente criou. Isso deixa o código do resto do grupo muito mais fácil de ler e entender.</p>
+<p>Na prática, aqui no nosso código, o REGISTER_BANK é uma <b>classe que agrupa todos os registradores do MIPS como objetos individuais</b>. A ideia é que, em vez de acessar um registrador por um número (como o registrador 16), a Control Unit pode simplesmente pedir pelo nome ("s0"), usando os mapas que a gente criou. Isso deixa o código do resto do grupo muito mais fácil de ler e entender.</p>
 
 **Registradores de uso específico:** 
 - `REGISTER pc, mar, cr, epc, sr, hi, lo, ir;`
@@ -647,42 +644,156 @@ wsl --install -d Ubuntu
 3. Abra o terminal do vscode e digite os seguintes comandos:
 - `make teste`
  
-Certifique-se de fornecer exemplos de comandos ou scripts necessários para executar o projeto corretamente.
+
+## Como Rodar:
+Para compilar e executar este projeto, você precisará ter os seguintes softwares instalados:
+
+  * `g++` (com suporte a C++17)
+  * `CMake` (versão 3.10 ou superior)
+  * `make`
+
+### ⚙️ Como Compilar o Projeto
+
+O projeto utiliza `CMake` para gerar os arquivos de compilação. O processo é simples e deve ser feito a partir do terminal.
+
+1.  **Abra o terminal** na pasta raiz do projeto.
+
+2.  **Crie e acesse um diretório de build:** É uma boa prática manter os arquivos de compilação separados do código-fonte.
+
+    ```bash
+    mkdir build
+    cd build
+    ```
+
+3.  **Execute o CMake:** Este comando irá configurar o projeto e gerar o `Makefile` dentro da pasta `build`.
+
+    ```bash
+    cmake ..
+    ```
+
+4.  **Compile tudo:** Use o comando `make` para compilar o simulador principal e todos os testes.
+
+    ```bash
+    make
+    ```
+
+    Após a compilação, todos os executáveis estarão dentro da pasta `build`.
+
+### 🚀 Como Executar o Simulador
+
+Para rodar a simulação principal, você pode usar o executável `simulador` ou o alvo personalizado `run`.
+
+#### Opção 1: Executando diretamente
+
+Certifique-se de que você está dentro da pasta `build`.
+
+```bash
+./simulador
+```
+
+#### Opção 2: Usando o alvo `run`
+
+Este comando compila o projeto (se necessário) e o executa em seguida.
+
+```bash
+# Estando dentro da pasta 'build'
+make run
+```
+
+**Arquivos Necessários:** O simulador precisa dos arquivos `process1.json` e `tasks.json` para rodar. O sistema de build está configurado para copiá-los automaticamente para a pasta `build` durante a compilação.
+
+### 🧪 Como Rodar os Testes
+
+O projeto inclui vários testes para validar o funcionamento de cada módulo. Você pode executá-los usando os alvos `make` correspondentes de dentro da pasta `build`.
+
+  * **Rodar todos os testes de uma vez:**
+
+    ```bash
+    make test-all
+    ```
+
+  * **Verificação rápida (Passou/Falhou):**
+
+    ```bash
+    make check
+    ```
+
+  * **Executar testes individuais:**
+
+      * **Teste da ULA:** `make test_ula`
+      * **Teste do Mapeador de Registradores:** `make test_hash`
+      * **Teste do Banco de Registradores:** `make test_bank`
+      * **Teste de Métricas da CPU:** `make test_metrics`
+
+### 🛠️ Comandos Úteis do Makefile
+
+O `CMakeLists.txt` foi configurado para criar atalhos úteis que você pode usar com o `make`:
+
+| Comando         | Função                                                               |
+| --------------- | -------------------------------------------------------------------- |
+| `make` ou `make all` | Compila todos os alvos (simulador e testes).                      |
+| `make simulador`| Compila apenas o executável principal do simulador.                |
+| `make run`      | Executa o simulador principal (`./simulador`).                       |
+| `make test-all` | Executa todos os programas de teste em sequência.                    |
+| `make check`    | Fornece uma saída simplificada indicando se cada teste passou ou falhou. |
+| `make ajuda`    | Exibe uma lista com todos os comandos disponíveis.                   |
+| `make clean`    | Remove todos os arquivos gerados pela compilação.                    |
 
 
 ## Colaboradores
 
 ### EQUIPE CPU:
+#### Elaboração da Unidade de Controle:
 - João Pedro Rodrigues Silva ([jottynha](https://github.com/Jottynha))
-- Anderson Rodrigues dos Santos ([anderrsantos](https://github.com/anderrsantos)) 
 - Pedro Augusto Gontijo Moura ([PedroAugusto08](https://github.com/PedroAugusto08))
-- Henrique de Freitas Araújo ([ak4ai](https://github.com/ak4ai)) 
-- Álvaro Augusto José Silva ([alvaroajs](https://github.com/alvaroajs))
+
+#### Elaboração dos registradores:
+- Anderson Rodrigues dos Santos ([anderrsantos](https://github.com/anderrsantos)) 
+
+#### Elaboração do banco de registradores:
 - Eduardo da Silva Torres Grillo ([EduardoGrillo](https://github.com/EduardoGrillo))
+
+#### Elaboração da hash register:
+- Álvaro Augusto José Silva ([alvaroajs](https://github.com/alvaroajs))
+- Henrique de Freitas Araújo ([ak4ai](https://github.com/ak4ai)) 
+
+#### Elaboração da ULA:
 - Jader Oliveira Silva ([0livas](https://github.com/0livas))
 
 ### EQUIPE MEMÓRIAS:
+#### Elaboração das Memórias Primária, Secundária e Cache:
 - Guilherme Alvarenga de Azevedo ([alvarengazv](https://github.com/alvarengazv))
-- Maria Eduarda Teixeira Souza ([dudatsouza](https://github.com/dudatsouza))
-- Joaquim Cezar Santana da Cruz ([JoaquimCruz](https://github.com/JoaquimCruz))
-- Élcio Costa Amorim Neto ([elcioam](https://github.com/elcioam))
 - João Paulo da Cunha Faria ([joaopaulocunhafaria](https://github.com/0livjoaopaulocunhafariaas))
+- Joaquim Cezar Santana da Cruz ([JoaquimCruz](https://github.com/JoaquimCruz))
 - Lucas Cerqueira Portela ([lucasporteladev](https://github.com/lucasporteladev))
 
+#### Documentação das Memórias:
+- Maria Eduarda Teixeira Souza ([dudatsouza](https://github.com/dudatsouza))
+- Élcio Costa Amorim Neto ([elcioam](https://github.com/elcioam))
+
 ### EQUIPE PERIFÉRICOS:
-- Bruno Prado dos Santos ([bybrun0](https://github.com/bybrun0))
+#### Elaboração do programa e parser JSON:
 - ⁠Eduardo Henrique Queiroz Almeida ([edualmeidahr](https://github.com/edualmeidahr))
 - ⁠João Francisco Teles da Silva ([joaofranciscoteles](https://github.com/joaofranciscoteles))
 - ⁠Maíra Beatriz de Almeida Lacerda ([mairaallacerda](https://github.com/mairaallacerda))
+
+#### Elaboração do I/O:
+- Bruno Prado dos Santos ([bybrun0](https://github.com/bybrun0))
 - ⁠Sérgio Henrique Quedas Ramos ([serginnn](https://github.com/serginnn))
 
 ### EQUIPE SUPORTE:
-- Samuel Silva Gomes ([samuelsilvg](https://github.com/samuelsilvg))
+#### Configuração do Docker e apoio à integrações na CPU:
 - Gabriel Vitor Silva ([gvs22](https://github.com/gvs22))
+- Rafael Adolfo Silva Ferreira ([radsfer](https://github.com/radsfer))
 - Rafael Henrique Reis Costa ([RafaelReisyzx](https://github.com/RafaelReisyzx))
+
+#### Documentação geral e apoio à integração das memórias:
 - Lívia Gonçalves ([livia-goncalves-01](https://github.com/livia-goncalves-01))
-- Rafael Adolfo Silva Ferreira (radsfer](https://github.com/radsfer))
-- Matheus Emanuel da Silva ([matheus-emanue123](https://github.com/matheus-emanue123))
+- Samuel Silva Gomes ([samuelsilvg](https://github.com/samuelsilvg))
+
+#### Integrações e suporte aos periféricos:
 - Deivy Rossi Teixeira de Melo ([deivyrossi](https://github.com/deivyrossi))
+- Matheus Emanuel da Silva ([matheus-emanue123](https://github.com/matheus-emanue123))
+
 
 
