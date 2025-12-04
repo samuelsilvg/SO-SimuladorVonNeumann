@@ -1,0 +1,19 @@
+{
+    "program": [
+        { "instruction": "li", "rt": "$t0", "immediate": 15 },
+        { "instruction": "li", "rt": "$t1", "immediate": 25 },
+        { "instruction": "sw", "rt": "$t0", "addr": "0($gp)" },
+        { "instruction": "sw", "rt": "$t1", "addr": "4($gp)" },
+        { "instruction": "lw", "rt": "$t2", "addr": "0($gp)" },
+        { "instruction": "lw", "rt": "$t3", "addr": "4($gp)" },
+        { "instruction": "add", "rd": "$t4", "rs": "$t2", "rt": "$t3" },
+        { "instruction": "mult", "rd": "$t5", "rs": "$t2", "rt": "$t3" },
+        { "instruction": "sw", "rt": "$t4", "addr": "8($gp)" },
+        { "instruction": "sw", "rt": "$t5", "addr": "12($gp)" },
+        { "instruction": "lw", "rt": "$t6", "addr": "8($gp)" },
+        { "instruction": "lw", "rt": "$t7", "addr": "12($gp)" },
+        { "instruction": "sub", "rd": "$t8", "rs": "$t7", "rt": "$t6" },
+        { "instruction": "print", "rt": "$t8" },
+        { "instruction": "end" }
+    ]
+}

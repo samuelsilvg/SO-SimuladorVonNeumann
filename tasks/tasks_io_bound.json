@@ -1,0 +1,20 @@
+{
+  "program": [
+    { "instruction": "li", "rt": "$t0", "immediate": 42 },
+    { "instruction": "sw", "rt": "$t0", "addr": "0($gp)" },
+    { "instruction": "lw", "rt": "$t1", "addr": "0($gp)" },
+    { "instruction": "lw", "rt": "$t1", "addr": "0($gp)" },
+    { "instruction": "lw", "rt": "$t1", "addr": "0($gp)" },
+    { "instruction": "lw", "rt": "$t1", "addr": "0($gp)" },
+    { "instruction": "lw", "rt": "$t1", "addr": "0($gp)" },
+    { "instruction": "lw", "rt": "$t1", "addr": "0($gp)" },
+    { "instruction": "lw", "rt": "$t1", "addr": "0($gp)" },
+    { "instruction": "lw", "rt": "$t1", "addr": "0($gp)" },
+    { "instruction": "lw", "rt": "$t1", "addr": "0($gp)" },
+    { "instruction": "lw", "rt": "$t1", "addr": "0($gp)" },
+    { "instruction": "add", "rd": "$t2", "rs": "$t1", "rt": "$t1" },
+    { "instruction": "add", "rd": "$t2", "rs": "$t2", "rt": "$t1" },
+    { "instruction": "print", "rt": "$t2" },
+    { "instruction": "end" }
+  ]
+}
